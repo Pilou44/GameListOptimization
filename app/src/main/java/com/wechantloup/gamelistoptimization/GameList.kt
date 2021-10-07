@@ -42,4 +42,11 @@ data class Game(
     @SerializedName("favorite") var favorite: Boolean,
     @SerializedName("kidgame") var kidgame: Boolean,
     @SerializedName("hidden") var hidden: Boolean,
-)
+) {
+    fun isSameAs(item: Game): Boolean = id == item.id
+    fun hasSameContentAs(item: Game): Boolean =
+        name == item.name &&
+            kidgame == item.kidgame &&
+            favorite == item.favorite &&
+            hidden == item.hidden
+}

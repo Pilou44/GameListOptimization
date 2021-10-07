@@ -4,32 +4,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.wechantloup.gamelistoptimization.databinding.ItemGameBinding
 
 class GamesAdapter(
-    val onGameSetForKids: (Platform, String, Boolean) -> Unit,
-    val onGameSetFavorite: (Platform, String, Boolean) -> Unit,
-) : RecyclerView.Adapter<GamesAdapter.GameHolder>() {
-
-    private var platform: Platform? = null
+    val onGameSetForKids: (String, Boolean) -> Unit,
+    val onGameSetFavorite: (String, Boolean) -> Unit,
+) : ListAdapter<Game, GamesAdapter.GameHolder>(diffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = GameHolder(parent)
 
     override fun onBindViewHolder(holder: GameHolder, position: Int) {
-        holder.bind(requireNotNull(platform).gameList.games[position])
+        holder.bind(getItem(position))
     }
-
-    override fun getItemCount(): Int = platform?.gameList?.games?.size ?: 0
 
     override fun onViewRecycled(holder: GameHolder) {
         holder.unbind()
         super.onViewRecycled(holder)
-    }
-
-    fun setItems(newPlatform: Platform) {
-        platform = newPlatform
-        notifyDataSetChanged()
     }
 
     private fun ViewGroup.inflate(@LayoutRes layoutRes: Int, attachToRoot: Boolean = false): View =
@@ -43,27 +36,36 @@ class GamesAdapter(
         private val binding = ItemGameBinding.bind(itemView)
 
         fun bind(game: Game) {
-            val platform = requireNotNull(platform)
             binding.name.text = game.name
             binding.cbFavorite.isChecked = game.favorite
             binding.cbFavorite.setOnCheckedChangeListener { _, isChecked ->
                 if (game.favorite == isChecked) return@setOnCheckedChangeListener
 
                 game.favorite = isChecked
-                onGameSetFavorite(platform, game.id, isChecked)
+                onGameSetFavorite(game.id, isChecked)
             }
             binding.cbForKids.isChecked = game.kidgame
             binding.cbForKids.setOnCheckedChangeListener { _, isChecked ->
                 if (game.kidgame == isChecked) return@setOnCheckedChangeListener
 
                 game.kidgame = isChecked
-                onGameSetForKids(platform, game.id, isChecked)
+                onGameSetForKids(game.id, isChecked)
             }
         }
 
         fun unbind() {
             binding.cbFavorite.setOnCheckedChangeListener(null)
             binding.cbForKids.setOnCheckedChangeListener(null)
+        }
+    }
+
+    companion object {
+        private val diffCallback = object : DiffUtil.ItemCallback<Game>() {
+            override fun areItemsTheSame(oldItem: Game, newItem: Game): Boolean =
+                oldItem.isSameAs(newItem)
+
+            override fun areContentsTheSame(oldItem: Game, newItem: Game): Boolean =
+                oldItem.hasSameContentAs(newItem)
         }
     }
 }

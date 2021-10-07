@@ -110,6 +110,8 @@ class MainViewModel(
         outputStream.use {
             it.write(newXml.toByteArray(Charsets.UTF_8))
         }
+
+        _stateFlow.value = getPlatforms()
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")

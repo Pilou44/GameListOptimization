@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private val viewModel by viewModels<MainViewModel> {
         MainViewModelFactory(this)
     }
+    private var currentPlatform: Platform? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,9 +53,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun ActivityMainBinding.initRecyclerView() {
         rvGames.adapter = GamesAdapter(
-            viewModel::onGameSetForKids,
-            viewModel::onGameSetFavorite
+            ::onGameSetForKids,
+            ::onGameSetFavorite
         )
+    }
+
+    private fun onGameSetForKids(gameId: String, isSelected: Boolean) {
+        val platform = currentPlatform ?: return
+        viewModel.onGameSetForKids(platform, gameId, isSelected)
+    }
+
+    private fun onGameSetFavorite(gameId: String, isSelected: Boolean) {
+        val platform = currentPlatform ?: return
+        viewModel.onGameSetFavorite(platform, gameId, isSelected)
     }
 
     private fun subscribeToUpdates() {
@@ -81,7 +92,8 @@ class MainActivity : AppCompatActivity() {
                     it.toString() == text.toString()
                 } ?: return@addTextChangedListener
                 Log.i("TOTO", "Item selected: $selectedPlatform")
-                (binding.rvGames.adapter as GamesAdapter).setItems(selectedPlatform)
+                currentPlatform = selectedPlatform
+                (binding.rvGames.adapter as GamesAdapter).submitList(selectedPlatform.gameList.games)
             }
 
         }
