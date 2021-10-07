@@ -11,7 +11,7 @@ data class GameListHolder(
 @Keep
 data class GameList(
     @SerializedName("provider") val provider: Provider,
-    @SerializedName("game") val game: List<Game>
+    @SerializedName("game") val games: List<Game>
 )
 
 @Keep
@@ -39,7 +39,7 @@ data class Game(
     @SerializedName("marquee") val marquee: String,
     @SerializedName("video") val video: String,
     @SerializedName("genreid") val genreid: String,
-    @SerializedName("favorite") val favorite: Boolean = false,
-    @SerializedName("hidden") val kidgame: Boolean = false,
-    @SerializedName("kidgame") val hidden: Boolean = true,
+    @SerializedName("favorite") var favorite: Boolean,
+    @SerializedName("kidgame") var kidgame: Boolean,
+    @SerializedName("hidden") var hidden: Boolean,
 )

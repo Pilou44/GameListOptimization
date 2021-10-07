@@ -32,9 +32,6 @@ import java.lang.Exception
 import java.util.EnumSet
 import fr.arnaudguyon.xmltojsonlib.JsonToXml
 
-
-
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -132,7 +129,12 @@ class MainActivity : AppCompatActivity() {
 
                             val gson = Gson()
                             val holder = gson.fromJson(jsonString, GameListHolder::class.java)
-                            Log.i("TOTO", "Game list retrieved with ${holder.gameList.game.size} games")
+                            Log.i("TOTO", "Game list retrieved with ${holder.gameList.games.size} games")
+                            holder.gameList.games.forEach {
+                                it.kidgame = true
+                                it.favorite = false
+                                it.hidden = false
+                            }
 
                             val newJson = gson.toJson(holder)
 
@@ -143,6 +145,18 @@ class MainActivity : AppCompatActivity() {
                             val newXml = jsonToXml.toFormattedString(2)
 
                             Log.i("TOTO", "New xml = $newXml")
+
+                            val outFile = share.openFile(
+                                filePath,
+                                EnumSet.of(AccessMask.GENERIC_WRITE),
+                                null,
+                                SMB2ShareAccess.ALL,
+                                SMB2CreateDisposition.FILE_OVERWRITE,
+                                null)
+                            val outputStream = outFile.outputStream
+                            outputStream.use {
+                                it.write(newXml.toByteArray(Charsets.UTF_8))
+                            }
                         }
                     }
                 }
