@@ -37,14 +37,14 @@ class GamesAdapter(
 
         fun bind(game: Game) {
             binding.name.text = game.name
-            binding.cbFavorite.isChecked = game.favorite
+            binding.cbFavorite.isChecked = game.favorite == true
             binding.cbFavorite.setOnCheckedChangeListener { _, isChecked ->
                 if (game.favorite == isChecked) return@setOnCheckedChangeListener
 
                 game.favorite = isChecked
                 onGameSetFavorite(game.id, isChecked)
             }
-            binding.cbForKids.isChecked = game.kidgame
+            binding.cbForKids.isChecked = game.kidgame == true
             binding.cbForKids.setOnCheckedChangeListener { _, isChecked ->
                 if (game.kidgame == isChecked) return@setOnCheckedChangeListener
 

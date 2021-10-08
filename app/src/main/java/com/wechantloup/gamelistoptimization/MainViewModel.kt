@@ -85,7 +85,7 @@ class MainViewModel(
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    private suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
+    suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
         val share = share.await() ?: return@withContext
         val holder = GameListHolder(platform.gameList)
         val path = platform.path

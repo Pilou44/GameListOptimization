@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.wechantloup.gamelistoptimization.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +34,8 @@ class MainActivity : AppCompatActivity() {
         binding.initRecyclerView()
 
         subscribeToUpdates()
+
+        binding.initButtons()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -48,6 +51,33 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun ActivityMainBinding.initButtons() {
+        btnFavorite.setOnClickListener {
+            val platform = currentPlatform ?: return@setOnClickListener
+            val allFavorite = platform.gameList.games.all { it.favorite == true }
+            platform.gameList.games.forEach {
+                it.favorite = !allFavorite
+            }
+            val gameList = platform.gameList.getGamesCopy()
+            (rvGames.adapter as GamesAdapter).submitList(gameList)
+            lifecycleScope.launch {
+                viewModel.savePlatform(platform)
+            }
+        }
+        btnKid.setOnClickListener {
+            val platform = currentPlatform ?: return@setOnClickListener
+            val allChild = platform.gameList.games.all { it.kidgame == true }
+            platform.gameList.games.forEach {
+                it.kidgame = !allChild
+            }
+            val gameList = platform.gameList.getGamesCopy()
+            (rvGames.adapter as GamesAdapter).submitList(gameList)
+            lifecycleScope.launch {
+                viewModel.savePlatform(platform)
+            }
         }
     }
 
@@ -93,7 +123,8 @@ class MainActivity : AppCompatActivity() {
                 } ?: return@addTextChangedListener
                 Log.i("TOTO", "Item selected: $selectedPlatform")
                 currentPlatform = selectedPlatform
-                (binding.rvGames.adapter as GamesAdapter).submitList(selectedPlatform.gameList.games)
+                val gameList = selectedPlatform.gameList.getGamesCopy()
+                (binding.rvGames.adapter as GamesAdapter).submitList(gameList)
             }
 
         }
