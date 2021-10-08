@@ -102,7 +102,8 @@ class MainActivity : AppCompatActivity() {
         viewModel.stateFlow
             .flowWithLifecycle(lifecycle)
             .onEach {
-                showPlatforms(it)
+                showSources(it.sources)
+                showPlatforms(it.platforms)
             }
             .launchIn(lifecycleScope)
     }
@@ -125,6 +126,28 @@ class MainActivity : AppCompatActivity() {
                 currentPlatform = selectedPlatform
                 val gameList = selectedPlatform.gameList.getGamesCopy()
                 (binding.rvGames.adapter as GamesAdapter).submitList(gameList)
+            }
+
+        }
+    }
+
+    private fun showSources(sources: List<Source>) {
+        ArrayAdapter<Source>(
+            this,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.addAll(sources)
+            // Specify the layout to use when the list of choices appears
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            // Apply the adapter to the spinner
+            binding.dropdownSources.setAdapter(adapter)
+            binding.dropdownSources.addTextChangedListener { text ->
+                val selectedSource = sources.firstOrNull {
+                    it.toString() == text.toString()
+                } ?: return@addTextChangedListener
+                binding.dropdownPlatforms.text.clear()
+                (binding.rvGames.adapter as GamesAdapter).submitList(emptyList())
+                viewModel.setSource(selectedSource)
             }
 
         }

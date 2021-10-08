@@ -18,9 +18,7 @@ import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
 import fr.arnaudguyon.xmltojsonlib.JsonToXml
 import fr.arnaudguyon.xmltojsonlib.XmlToJson
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -38,12 +36,18 @@ class MainViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
 
-    private val _stateFlow = MutableStateFlow(emptyList<Platform>())
-    val stateFlow: StateFlow<List<Platform>> = _stateFlow
+    private val _stateFlow = MutableStateFlow(State())
+    val stateFlow: StateFlow<State> = _stateFlow
 
     private val gson = Gson()
 
-    @Suppress("BlockingMethodInNonBlockingContext")
+    private val gameSources = listOf(
+        Source.NAS,
+        Source.RETROPIE
+    )
+
+    private var share: DiskShare? = null
+    /*@Suppress("BlockingMethodInNonBlockingContext")
     private val share: Deferred<DiskShare?> = viewModelScope.async(Dispatchers.IO) {
         var connection: Connection? = null
         var session: Session? = null
@@ -60,18 +64,29 @@ class MainViewModel(
             connection?.close()
             null
         }
-    }
+    }*/
 
     init {
-        viewModelScope.launch {
-            _stateFlow.value = getPlatforms()
-        }
+        _stateFlow.value = stateFlow.value.copy(sources = gameSources)
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
     override fun onCleared() {
-        viewModelScope.launch { share.await()?.close() }
-        super.onCleared()
+        viewModelScope.launch(Dispatchers.IO) {
+            share?.close()
+            super.onCleared()
+        }
+    }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    fun setSource(source: Source) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (share?.isConnected == true) {
+                share?.close()
+            }
+            share = source.connectTo()
+            _stateFlow.value = stateFlow.value.copy(platforms = getPlatforms())
+        }
     }
 
     fun onGameSetForKids(platform: Platform, gameId: String, value: Boolean) {
@@ -86,7 +101,7 @@ class MainViewModel(
 
     @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
-        val share = share.await() ?: return@withContext
+        val share = share ?: return@withContext
         val holder = GameListHolder(platform.gameList)
         val path = platform.path
         val newJson = gson.toJson(holder)
@@ -111,13 +126,31 @@ class MainViewModel(
             it.write(newXml.toByteArray(Charsets.UTF_8))
         }
 
-        _stateFlow.value = getPlatforms()
+        _stateFlow.value = stateFlow.value.copy(platforms = getPlatforms())
+    }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private suspend fun Source.connectTo(): DiskShare? = withContext(Dispatchers.IO) {
+            var connection: Connection? = null
+            var session: Session? = null
+            try {
+                val client = SMBClient()
+                connection = client.connect(ip)
+                val ac = AuthenticationContext(login, password.toCharArray(), "DOMAIN")
+                session = connection.authenticate(ac)
+                (session.connectShare(path) as DiskShare)
+            } catch (e: Exception) {
+                // ToDo
+                session?.close()
+                connection?.close()
+                null
+            }
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun getPlatforms(): List<Platform> = withContext(Dispatchers.IO) {
         val platforms = mutableListOf<Platform>()
-        val share = share.await() ?: return@withContext emptyList()
+        val share = share ?: return@withContext emptyList()
 
         for (file in share.listClean("", "*")) {
             val folderName = file.fileName
@@ -157,11 +190,12 @@ class MainViewModel(
     private fun DiskShare.listClean(path: String, pattern: String) =
         list(path, pattern).filter { it.fileName != "." && it.fileName != ".." }
 
+    data class State(
+        val sources: List<Source> = emptyList(),
+        val platforms: List<Platform> = emptyList(),
+    )
+
     companion object {
-        private const val NAS_IP = "192.168.44.104"
-        private const val NAS_ROOT = "Emulation"
-        private const val NAS_LOGIN = "emulation"
-        private const val NAS_PWD = "fPwJ\$\""
         private const val GAMELIST_FILE = "gamelist.xml"
     }
 }
