@@ -99,9 +99,11 @@ class MainViewModel(
         val platform = currentPlatform ?: return
         val gameListBackup = platform.gameListBackup ?: return
         platform.gameList.games.forEach { game ->
-            val backup = gameListBackup.games.firstOrNull { it.id == game.id } ?: return
-            game.kidgame = backup.kidgame
-            game.favorite = backup.favorite
+            val backup = gameListBackup.games.firstOrNull { it.id == game.id }
+            backup?.let {
+                game.kidgame = backup.kidgame
+                game.favorite = backup.favorite
+            }
         }
         viewModelScope.launch { savePlatform(platform) }
     }
