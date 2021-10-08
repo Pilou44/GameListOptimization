@@ -2,6 +2,7 @@ package com.wechantloup.gamelistoptimization
 
 class Platform(
     val gameList: GameList,
+    val gameListBackup: GameList?,
     val path: String,
 ) {
 

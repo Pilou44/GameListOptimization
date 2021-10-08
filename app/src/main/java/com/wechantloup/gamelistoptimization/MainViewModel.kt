@@ -47,24 +47,7 @@ class MainViewModel(
     )
 
     private var share: DiskShare? = null
-    /*@Suppress("BlockingMethodInNonBlockingContext")
-    private val share: Deferred<DiskShare?> = viewModelScope.async(Dispatchers.IO) {
-        var connection: Connection? = null
-        var session: Session? = null
-        try {
-            val client = SMBClient()
-
-            connection = client.connect(NAS_IP)
-            val ac = AuthenticationContext(NAS_LOGIN, NAS_PWD.toCharArray(), "DOMAIN")
-            session = connection.authenticate(ac)
-            (session.connectShare(NAS_ROOT) as DiskShare)
-        } catch (e: Exception) {
-            // ToDo
-            session?.close()
-            connection?.close()
-            null
-        }
-    }*/
+    private var currentPlatform: Platform? = null
 
     init {
         _stateFlow.value = stateFlow.value.copy(sources = gameSources)
@@ -85,22 +68,64 @@ class MainViewModel(
                 share?.close()
             }
             share = source.connectTo()
-            _stateFlow.value = stateFlow.value.copy(platforms = getPlatforms())
+            _stateFlow.value = stateFlow.value.copy(
+                platforms = getPlatforms(),
+                games = emptyList()
+            )
         }
     }
 
-    fun onGameSetForKids(platform: Platform, gameId: String, value: Boolean) {
+    fun setPlatform(selectedPlatform: Platform) {
+        currentPlatform = selectedPlatform
+        _stateFlow.value = stateFlow.value.copy(
+            games = selectedPlatform.gameList.getGamesCopy(),
+            hasBackup = selectedPlatform.gameListBackup != null
+        )
+    }
+
+    fun onGameSetForKids(gameId: String, value: Boolean) {
+        val platform = currentPlatform ?: return
         platform.gameList.games.first { it.id == gameId }.kidgame = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
-    fun onGameSetFavorite(platform: Platform, gameId: String, value: Boolean) {
+    fun onGameSetFavorite(gameId: String, value: Boolean) {
+        val platform = currentPlatform ?: return
         platform.gameList.games.first { it.id == gameId }.favorite = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
+    fun copyBackupValues() {
+        val platform = currentPlatform ?: return
+        val gameListBackup = platform.gameListBackup ?: return
+        platform.gameList.games.forEach { game ->
+            val backup = gameListBackup.games.firstOrNull { it.id == game.id } ?: return
+            game.kidgame = backup.kidgame
+            game.favorite = backup.favorite
+        }
+        viewModelScope.launch { savePlatform(platform) }
+    }
+
+    fun setAllFavorite() {
+        val platform = currentPlatform ?: return
+        val allFavorite = platform.gameList.games.all { it.favorite == true }
+        platform.gameList.games.forEach {
+            it.favorite = !allFavorite
+        }
+        viewModelScope.launch { savePlatform(platform) }
+    }
+
+    fun setAllForKids() {
+        val platform = currentPlatform ?: return
+        val allForKids = platform.gameList.games.all { it.kidgame == true }
+        platform.gameList.games.forEach {
+            it.kidgame = !allForKids
+        }
+        viewModelScope.launch { savePlatform(platform) }
+    }
+
     @Suppress("BlockingMethodInNonBlockingContext")
-    suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
+    private suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
         val share = share ?: return@withContext
         val holder = GameListHolder(platform.gameList)
         val path = platform.path
@@ -126,7 +151,14 @@ class MainViewModel(
             it.write(newXml.toByteArray(Charsets.UTF_8))
         }
 
-        _stateFlow.value = stateFlow.value.copy(platforms = getPlatforms())
+        val platforms = getPlatforms()
+        val newPlatform = platforms.first { it.path == platform.path }
+        currentPlatform = newPlatform
+
+        _stateFlow.value = stateFlow.value.copy(
+            games = newPlatform.gameList.getGamesCopy(),
+            hasBackup = newPlatform.gameListBackup != null
+        )
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
@@ -155,33 +187,37 @@ class MainViewModel(
         for (file in share.listClean("", "*")) {
             val folderName = file.fileName
             if (share.isFolder("", folderName)) {
-                Log.i("TOTO", "Parsing $folderName")
                 val filePath = "$folderName\\${GAMELIST_FILE}"
-                if (share.fileExists(filePath)) {
-                    Log.i("TOTO", "Game list found for $folderName")
-                    val readFile = share.openFile(
-                        filePath,
-                        EnumSet.of(AccessMask.GENERIC_READ),
-                        null,
-                        SMB2ShareAccess.ALL,
-                        SMB2CreateDisposition.FILE_OPEN,
-                        null
-                    )
-
-                    val inputStream = readFile.inputStream
-                    val xmlToJson: XmlToJson = XmlToJson.Builder(inputStream, null).build()
-                    inputStream.close()
-
-                    val jsonString = xmlToJson.toString()
-
-                    val holder = gson.fromJson(jsonString, GameListHolder::class.java)
-                    Log.i("TOTO", "Game list retrieved with ${holder.gameList.games.size} games")
-
-                    platforms.add(Platform(holder.gameList, filePath))
-                }
+                val gameList = share.extractGameList(folderName, GAMELIST_FILE) ?: break
+                val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
+                platforms.add(Platform(gameList, gameListBackup, filePath))
             }
         }
         platforms
+    }
+
+    private fun DiskShare.extractGameList(folderName: String, fileName: String): GameList? {
+        val filePath = "$folderName\\$fileName"
+
+        if (!fileExists(filePath)) return null
+
+        val readFile = openFile(
+            filePath,
+            EnumSet.of(AccessMask.GENERIC_READ),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OPEN,
+            null
+        )
+
+        val inputStream = readFile.inputStream
+        val xmlToJson: XmlToJson = XmlToJson.Builder(inputStream, null).build()
+        inputStream.close()
+
+        val jsonString = xmlToJson.toString()
+
+        val holder = gson.fromJson(jsonString, GameListHolder::class.java)
+        return holder.gameList
     }
 
     private fun DiskShare.isFolder(path: String, fileName: String): Boolean =
@@ -193,9 +229,12 @@ class MainViewModel(
     data class State(
         val sources: List<Source> = emptyList(),
         val platforms: List<Platform> = emptyList(),
+        val games: List<Game> = emptyList(),
+        val hasBackup: Boolean = false,
     )
 
     companion object {
         private const val GAMELIST_FILE = "gamelist.xml"
+        private const val GAMELIST_BACKUP_FILE = "gamelist.backup.xml"
     }
 }

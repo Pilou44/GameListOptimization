@@ -101,6 +101,21 @@
         app:layout_constraintEnd_toStartOf="@id/btn_favorite"
         app:layout_constraintTop_toTopOf="@id/btn_favorite" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_copy_from_backup"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/space_xl"
+        android:layout_marginTop="@dimen/space_s"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/button_label_copy_backup"
+        app:layout_constraintEnd_toStartOf="@id/btn_kid"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spinner_platform" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_games"
         android:layout_width="0dp"

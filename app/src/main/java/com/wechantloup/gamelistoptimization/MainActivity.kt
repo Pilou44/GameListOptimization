@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import com.wechantloup.gamelistoptimization.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,7 +20,6 @@ class MainActivity : AppCompatActivity() {
     private val viewModel by viewModels<MainViewModel> {
         MainViewModelFactory(this)
     }
-    private var currentPlatform: Platform? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,11 +29,10 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
+        binding.initButtons()
         binding.initRecyclerView()
 
         subscribeToUpdates()
-
-        binding.initButtons()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -55,101 +52,96 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun ActivityMainBinding.initButtons() {
-        btnFavorite.setOnClickListener {
-            val platform = currentPlatform ?: return@setOnClickListener
-            val allFavorite = platform.gameList.games.all { it.favorite == true }
-            platform.gameList.games.forEach {
-                it.favorite = !allFavorite
-            }
-            val gameList = platform.gameList.getGamesCopy()
-            (rvGames.adapter as GamesAdapter).submitList(gameList)
-            lifecycleScope.launch {
-                viewModel.savePlatform(platform)
-            }
+        btnFavorite.isEnabled = false
+        btnKid.isEnabled = false
+        btnCopyFromBackup.isEnabled = false
+        dropdownSources.isEnabled = false
+        dropdownPlatforms.isEnabled = false
+
+        btnCopyFromBackup.setOnClickListener {
+            viewModel.copyBackupValues()
         }
+
+        btnFavorite.setOnClickListener {
+            viewModel.setAllFavorite()
+        }
+
         btnKid.setOnClickListener {
-            val platform = currentPlatform ?: return@setOnClickListener
-            val allChild = platform.gameList.games.all { it.kidgame == true }
-            platform.gameList.games.forEach {
-                it.kidgame = !allChild
-            }
-            val gameList = platform.gameList.getGamesCopy()
-            (rvGames.adapter as GamesAdapter).submitList(gameList)
-            lifecycleScope.launch {
-                viewModel.savePlatform(platform)
-            }
+            viewModel.setAllForKids()
         }
     }
 
     private fun ActivityMainBinding.initRecyclerView() {
         rvGames.adapter = GamesAdapter(
-            ::onGameSetForKids,
-            ::onGameSetFavorite
+            viewModel::onGameSetForKids,
+            viewModel::onGameSetFavorite
         )
-    }
-
-    private fun onGameSetForKids(gameId: String, isSelected: Boolean) {
-        val platform = currentPlatform ?: return
-        viewModel.onGameSetForKids(platform, gameId, isSelected)
-    }
-
-    private fun onGameSetFavorite(gameId: String, isSelected: Boolean) {
-        val platform = currentPlatform ?: return
-        viewModel.onGameSetFavorite(platform, gameId, isSelected)
     }
 
     private fun subscribeToUpdates() {
         viewModel.stateFlow
             .flowWithLifecycle(lifecycle)
             .onEach {
-                showSources(it.sources)
-                showPlatforms(it.platforms)
+                binding.showSources(it.sources)
+                binding.showPlatforms(it.platforms)
+                binding.showGames(it.games, it.hasBackup)
             }
             .launchIn(lifecycleScope)
     }
 
-    private fun showPlatforms(platforms: List<Platform>) {
+    private fun ActivityMainBinding.showGames(games: List<Game>, hasBackup: Boolean) {
+        (rvGames.adapter as GamesAdapter).submitList(games)
+        btnKid.isEnabled = games.isNotEmpty()
+        btnFavorite.isEnabled = games.isNotEmpty()
+        btnCopyFromBackup.isEnabled = games.isNotEmpty() && hasBackup
+    }
+
+    private fun ActivityMainBinding.showPlatforms(platforms: List<Platform>) {
         ArrayAdapter<Platform>(
-            this,
+            this@MainActivity,
             android.R.layout.simple_spinner_item
         ).also { adapter ->
             adapter.addAll(platforms)
             // Specify the layout to use when the list of choices appears
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             // Apply the adapter to the spinner
-            binding.dropdownPlatforms.setAdapter(adapter)
-            binding.dropdownPlatforms.addTextChangedListener { text ->
-                val selectedPlatform = platforms.firstOrNull {
-                    it.toString() == text.toString()
-                } ?: return@addTextChangedListener
-                Log.i("TOTO", "Item selected: $selectedPlatform")
-                currentPlatform = selectedPlatform
-                val gameList = selectedPlatform.gameList.getGamesCopy()
-                (binding.rvGames.adapter as GamesAdapter).submitList(gameList)
-            }
-
+            dropdownPlatforms.setAdapter(adapter)
         }
+        dropdownPlatforms.addTextChangedListener { text ->
+            val selectedPlatform = platforms.firstOrNull {
+                it.toString() == text.toString()
+            } ?: return@addTextChangedListener
+            Log.i("TOTO", "Item selected: $selectedPlatform")
+            viewModel.setPlatform(selectedPlatform)
+        }
+        dropdownPlatforms.isEnabled = platforms.isNotEmpty()
     }
 
-    private fun showSources(sources: List<Source>) {
+    private fun ActivityMainBinding.showSources(sources: List<Source>) {
         ArrayAdapter<Source>(
-            this,
+            this@MainActivity,
             android.R.layout.simple_spinner_item
         ).also { adapter ->
             adapter.addAll(sources)
             // Specify the layout to use when the list of choices appears
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             // Apply the adapter to the spinner
-            binding.dropdownSources.setAdapter(adapter)
-            binding.dropdownSources.addTextChangedListener { text ->
-                val selectedSource = sources.firstOrNull {
-                    it.toString() == text.toString()
-                } ?: return@addTextChangedListener
-                binding.dropdownPlatforms.text.clear()
-                (binding.rvGames.adapter as GamesAdapter).submitList(emptyList())
-                viewModel.setSource(selectedSource)
-            }
-
+            dropdownSources.setAdapter(adapter)
         }
+
+        dropdownSources.addTextChangedListener { text ->
+            val selectedSource = sources.firstOrNull {
+                it.toString() == text.toString()
+            } ?: return@addTextChangedListener
+            dropdownPlatforms.text.clear()
+            (rvGames.adapter as GamesAdapter).submitList(emptyList())
+            btnKid.isEnabled = false
+            btnFavorite.isEnabled = false
+            btnCopyFromBackup.isEnabled = false
+            spinnerPlatform.isEnabled = false
+            viewModel.setSource(selectedSource)
+        }
+
+        dropdownSources.isEnabled = sources.isNotEmpty()
     }
 }
