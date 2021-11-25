@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 import java.util.EnumSet
 
 class MainViewModelFactory(private val activity: Activity) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
         return MainViewModel(activity.application) as T
     }
