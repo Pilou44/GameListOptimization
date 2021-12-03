@@ -174,7 +174,7 @@ class MainViewModel(
                 session = connection.authenticate(ac)
                 (session.connectShare(path) as DiskShare)
             } catch (e: Exception) {
-                // ToDo
+                e.printStackTrace()
                 session?.close()
                 connection?.close()
                 null
@@ -190,9 +190,10 @@ class MainViewModel(
             val folderName = file.fileName
             if (share.isFolder("", folderName)) {
                 val filePath = "$folderName\\${GAMELIST_FILE}"
-                val gameList = share.extractGameList(folderName, GAMELIST_FILE) ?: break
-                val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
-                platforms.add(Platform(gameList, gameListBackup, filePath))
+                share.extractGameList(folderName, GAMELIST_FILE)?.let { it ->
+                    val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
+                    platforms.add(Platform(it, gameListBackup, filePath))
+                }
             }
         }
         platforms

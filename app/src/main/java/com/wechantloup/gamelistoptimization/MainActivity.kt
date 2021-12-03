@@ -7,6 +7,8 @@ import android.view.MenuItem
 import android.widget.ArrayAdapter
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material.MaterialTheme
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -29,8 +31,19 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        binding.initButtons()
-        binding.initRecyclerView()
+//        binding.initButtons()
+//        binding.initRecyclerView()
+        binding.composeView.apply {
+            // Dispose of the Composition when the view's LifecycleOwner
+            // is destroyed
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                // In Compose world
+                MaterialTheme {
+                    MainScreen(viewModel)
+                }
+            }
+        }
 
         subscribeToUpdates()
     }
@@ -51,32 +64,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun ActivityMainBinding.initButtons() {
-        btnFavorite.isEnabled = false
-        btnKid.isEnabled = false
-        btnCopyFromBackup.isEnabled = false
-        dropdownSources.isEnabled = false
-        dropdownPlatforms.isEnabled = false
-
-        btnCopyFromBackup.setOnClickListener {
-            viewModel.copyBackupValues()
-        }
-
-        btnFavorite.setOnClickListener {
-            viewModel.setAllFavorite()
-        }
-
-        btnKid.setOnClickListener {
-            viewModel.setAllForKids()
-        }
-    }
-
-    private fun ActivityMainBinding.initRecyclerView() {
-        rvGames.adapter = GamesAdapter(
-            viewModel::onGameSetForKids,
-            viewModel::onGameSetFavorite
-        )
-    }
+//    private fun ActivityMainBinding.initButtons() {
+//        btnFavorite.isEnabled = false
+//        btnKid.isEnabled = false
+//        btnCopyFromBackup.isEnabled = false
+//        dropdownSources.isEnabled = false
+//        dropdownPlatforms.isEnabled = false
+//
+//        btnCopyFromBackup.setOnClickListener {
+//            viewModel.copyBackupValues()
+//        }
+//
+//        btnFavorite.setOnClickListener {
+//            viewModel.setAllFavorite()
+//        }
+//
+//        btnKid.setOnClickListener {
+//            viewModel.setAllForKids()
+//        }
+//    }
+//
+//    private fun ActivityMainBinding.initRecyclerView() {
+//        rvGames.adapter = GamesAdapter(
+//            viewModel::onGameSetForKids,
+//            viewModel::onGameSetFavorite
+//        )
+//    }
 
     private fun subscribeToUpdates() {
         viewModel.stateFlow
@@ -84,17 +97,17 @@ class MainActivity : AppCompatActivity() {
             .onEach {
                 binding.showSources(it.sources)
                 binding.showPlatforms(it.platforms)
-                binding.showGames(it.games, it.hasBackup)
+//                binding.showGames(it.games, it.hasBackup)
             }
             .launchIn(lifecycleScope)
     }
 
-    private fun ActivityMainBinding.showGames(games: List<Game>, hasBackup: Boolean) {
-        (rvGames.adapter as GamesAdapter).submitList(games)
-        btnKid.isEnabled = games.isNotEmpty()
-        btnFavorite.isEnabled = games.isNotEmpty()
-        btnCopyFromBackup.isEnabled = games.isNotEmpty() && hasBackup
-    }
+//    private fun ActivityMainBinding.showGames(games: List<Game>, hasBackup: Boolean) {
+//        (rvGames.adapter as GamesAdapter).submitList(games)
+//        btnKid.isEnabled = games.isNotEmpty()
+//        btnFavorite.isEnabled = games.isNotEmpty()
+//        btnCopyFromBackup.isEnabled = games.isNotEmpty() && hasBackup
+//    }
 
     private fun ActivityMainBinding.showPlatforms(platforms: List<Platform>) {
         ArrayAdapter<Platform>(
@@ -134,10 +147,10 @@ class MainActivity : AppCompatActivity() {
                 it.toString() == text.toString()
             } ?: return@addTextChangedListener
             dropdownPlatforms.text.clear()
-            (rvGames.adapter as GamesAdapter).submitList(emptyList())
-            btnKid.isEnabled = false
-            btnFavorite.isEnabled = false
-            btnCopyFromBackup.isEnabled = false
+//            (rvGames.adapter as GamesAdapter).submitList(emptyList())
+//            btnKid.isEnabled = false
+//            btnFavorite.isEnabled = false
+//            btnCopyFromBackup.isEnabled = false
             spinnerPlatform.isEnabled = false
             viewModel.setSource(selectedSource)
         }

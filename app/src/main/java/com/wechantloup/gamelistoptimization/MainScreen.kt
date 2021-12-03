@@ -15,6 +15,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -26,16 +27,22 @@ import androidx.compose.ui.tooling.preview.Preview
 fun MainScreen(
     viewModel: MainViewModel,
 ) {
-    Column() {
-
-    }
+    val state = viewModel.stateFlow.collectAsState()
+    MainScreen(
+        games = state.value.games,
+        onForChildClicked = viewModel::onGameSetForKids,
+        onFavoriteClicked = viewModel::onGameSetFavorite,
+        onCopyBackupClicked = viewModel::copyBackupValues,
+        onAllChildClicked = viewModel::setAllForKids,
+        onAllFavoriteClicked = viewModel::setAllFavorite,
+    )
 }
 
 @Composable
 fun MainScreen(
     games: List<Game>,
-    onForChildClicked: (Boolean) -> Unit,
-    onFavoriteClicked: (Boolean) -> Unit,
+    onForChildClicked: (String, Boolean) -> Unit,
+    onFavoriteClicked: (String, Boolean) -> Unit,
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
@@ -103,16 +110,16 @@ fun Header(
 fun GameListItem(
     modifier: Modifier = Modifier,
     games: List<Game>,
-    onForChildClicked: (Boolean) -> Unit,
-    onFavoriteClicked: (Boolean) -> Unit,
+    onForChildClicked: (String, Boolean) -> Unit,
+    onFavoriteClicked: (String, Boolean) -> Unit,
 ) {
     LazyColumn(modifier) {
         games.forEach { game ->
             item {
                 GameItem(
                     game = game,
-                    onForChildClicked = onForChildClicked,
-                    onFavoriteClicked = onFavoriteClicked
+                    onForChildClicked = { checked -> onForChildClicked(game.id, checked) },
+                    onFavoriteClicked = { checked -> onFavoriteClicked(game.id, checked) }
                 )
             }
         }
