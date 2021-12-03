@@ -1,20 +1,13 @@
 package com.wechantloup.gamelistoptimization
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.ArrayAdapter
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.MaterialTheme
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.widget.addTextChangedListener
-import androidx.lifecycle.flowWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import com.wechantloup.gamelistoptimization.databinding.ActivityMainBinding
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,11 +24,8 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-//        binding.initButtons()
-//        binding.initRecyclerView()
         binding.composeView.apply {
-            // Dispose of the Composition when the view's LifecycleOwner
-            // is destroyed
+            // Dispose of the Composition when the view's LifecycleOwner is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 // In Compose world
@@ -44,8 +34,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
-        subscribeToUpdates()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -62,99 +50,5 @@ class MainActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-//    private fun ActivityMainBinding.initButtons() {
-//        btnFavorite.isEnabled = false
-//        btnKid.isEnabled = false
-//        btnCopyFromBackup.isEnabled = false
-//        dropdownSources.isEnabled = false
-//        dropdownPlatforms.isEnabled = false
-//
-//        btnCopyFromBackup.setOnClickListener {
-//            viewModel.copyBackupValues()
-//        }
-//
-//        btnFavorite.setOnClickListener {
-//            viewModel.setAllFavorite()
-//        }
-//
-//        btnKid.setOnClickListener {
-//            viewModel.setAllForKids()
-//        }
-//    }
-//
-//    private fun ActivityMainBinding.initRecyclerView() {
-//        rvGames.adapter = GamesAdapter(
-//            viewModel::onGameSetForKids,
-//            viewModel::onGameSetFavorite
-//        )
-//    }
-
-    private fun subscribeToUpdates() {
-        viewModel.stateFlow
-            .flowWithLifecycle(lifecycle)
-            .onEach {
-                binding.showSources(it.sources)
-                binding.showPlatforms(it.platforms)
-//                binding.showGames(it.games, it.hasBackup)
-            }
-            .launchIn(lifecycleScope)
-    }
-
-//    private fun ActivityMainBinding.showGames(games: List<Game>, hasBackup: Boolean) {
-//        (rvGames.adapter as GamesAdapter).submitList(games)
-//        btnKid.isEnabled = games.isNotEmpty()
-//        btnFavorite.isEnabled = games.isNotEmpty()
-//        btnCopyFromBackup.isEnabled = games.isNotEmpty() && hasBackup
-//    }
-
-    private fun ActivityMainBinding.showPlatforms(platforms: List<Platform>) {
-        ArrayAdapter<Platform>(
-            this@MainActivity,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.addAll(platforms)
-            // Specify the layout to use when the list of choices appears
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            // Apply the adapter to the spinner
-            dropdownPlatforms.setAdapter(adapter)
-        }
-        dropdownPlatforms.addTextChangedListener { text ->
-            val selectedPlatform = platforms.firstOrNull {
-                it.toString() == text.toString()
-            } ?: return@addTextChangedListener
-            Log.i("TOTO", "Item selected: $selectedPlatform")
-            viewModel.setPlatform(selectedPlatform)
-        }
-        dropdownPlatforms.isEnabled = platforms.isNotEmpty()
-    }
-
-    private fun ActivityMainBinding.showSources(sources: List<Source>) {
-        ArrayAdapter<Source>(
-            this@MainActivity,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.addAll(sources)
-            // Specify the layout to use when the list of choices appears
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            // Apply the adapter to the spinner
-            dropdownSources.setAdapter(adapter)
-        }
-
-        dropdownSources.addTextChangedListener { text ->
-            val selectedSource = sources.firstOrNull {
-                it.toString() == text.toString()
-            } ?: return@addTextChangedListener
-            dropdownPlatforms.text.clear()
-//            (rvGames.adapter as GamesAdapter).submitList(emptyList())
-//            btnKid.isEnabled = false
-//            btnFavorite.isEnabled = false
-//            btnCopyFromBackup.isEnabled = false
-            spinnerPlatform.isEnabled = false
-            viewModel.setSource(selectedSource)
-        }
-
-        dropdownSources.isEnabled = sources.isNotEmpty()
     }
 }
