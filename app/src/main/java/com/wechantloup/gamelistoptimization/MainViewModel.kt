@@ -70,7 +70,6 @@ class MainViewModel(
             share = source.connectTo()
             _stateFlow.value = stateFlow.value.copy(
                 platforms = getPlatforms(),
-                games = emptyList()
             )
         }
     }
@@ -79,7 +78,7 @@ class MainViewModel(
         currentPlatform = selectedPlatform
         _stateFlow.value = stateFlow.value.copy(
             games = selectedPlatform.gameList.getGamesCopy(),
-            hasBackup = selectedPlatform.gameListBackup != null
+            hasBackup = selectedPlatform.gameListBackup != null,
         )
     }
 

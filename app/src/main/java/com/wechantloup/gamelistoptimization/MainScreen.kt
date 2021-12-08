@@ -1,8 +1,6 @@
 package com.wechantloup.gamelistoptimization
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,27 +10,31 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Checkbox
-import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ExposedDropdownMenuBox
+import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun MainScreen(
@@ -66,140 +68,48 @@ fun MainScreen(
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Spinner(
-            values = sources,
-            onValueSelected = onSourceSelected,
-        )
-        Spinner(
-            values = platforms,
-            onValueSelected = onPlatformSelected,
-        )
-        Header(
-            onCopyBackupClicked = onCopyBackupClicked,
-            onAllChildClicked = onAllChildClicked,
-            onAllFavoriteClicked = onAllFavoriteClicked
-        )
-        GameListItem(
-            modifier = Modifier.weight(1f),
-            games = games,
-            onForChildClicked = onForChildClicked,
-            onFavoriteClicked = onFavoriteClicked,
-        )
-    }
-}
 
-@Composable
-fun <T> Spinner(
-    values: List<T>,
-    onValueSelected: (T) -> Unit,
-) {
-    // State variables
-    val selectedValue = remember { mutableStateOf(values.firstOrNull()) }
-    val expanded = remember { mutableStateOf(false)}
-
-    Box(Modifier.fillMaxWidth(),contentAlignment = Alignment.Center) {
-        Row(
-            Modifier
-                .padding(24.dp)
-                .clickable {
-                    expanded.value = !expanded.value
-                }
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) { // Anchor view
-            val text = selectedValue.value?.toString() ?: ""
-            Text(text = text, fontSize = 18.sp,modifier = Modifier.padding(end = 8.dp)) // Country name label
-            Icon(imageVector = Icons.Filled.ArrowDropDown, contentDescription = "")
-
-            //
-            DropdownMenu(expanded = expanded.value, onDismissRequest = {
-                expanded.value = false
-            }) {
-                values.forEach{ value ->
-                    DropdownMenuItem(onClick = {
-                        expanded.value = false
-                        selectedValue.value = value
-                        onValueSelected(value)
-                    }) {
-                        Text(text = value.toString())
-                    }
-                }
-            }
+    val scaffoldState = rememberScaffoldState()
+    Scaffold(
+        scaffoldState = scaffoldState,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(R.string.app_name)
+                    )
+                },
+                backgroundColor = MaterialTheme.colors.surface,
+            )
+        }
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Dropdown(
+                title = "Sources",
+                values = sources,
+                onValueSelected = onSourceSelected,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Dropdown(
+                title = "Platforms",
+                values = platforms,
+                onValueSelected = onPlatformSelected,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Header(
+                onCopyBackupClicked = onCopyBackupClicked,
+                onAllChildClicked = onAllChildClicked,
+                onAllFavoriteClicked = onAllFavoriteClicked
+            )
+            GameListItem(
+                modifier = Modifier.weight(1f),
+                games = games,
+                onForChildClicked = onForChildClicked,
+                onFavoriteClicked = onFavoriteClicked,
+            )
         }
     }
-
 }
-
-//@Composable
-//fun DropDownList(
-//    requestToOpen: Boolean = false,
-//    list: List<String>,
-//    request: (Boolean) -> Unit,
-//    selectedString: (String) -> Unit
-//) {
-//    DropdownMenu(
-//        modifier = Modifier.fillMaxWidth(),
-////        toggle = {
-////            // Implement your toggle
-////        },
-//        expanded = requestToOpen,
-//        onDismissRequest = { request(false) },
-//    ) {
-//        list.forEach {
-//            DropdownMenuItem(
-//                modifier = Modifier.fillMaxWidth(),
-//                onClick = {
-//                    request(false)
-//                    selectedString(it)
-//                }
-//            ) {
-//                Text(it, modifier = Modifier.wrapContentWidth())
-//            }
-//        }
-//    }
-//}
-//@Composable
-//fun CountrySelection() {
-//    val countryList = listOf(
-//        "United state",
-//        "Australia",
-//        "Japan",
-//        "India",
-//    )
-//    val text = remember { mutableStateOf("") } // initial value
-//    val isOpen = remember { mutableStateOf(false) } // initial value
-//    val openCloseOfDropDownList: (Boolean) -> Unit = {
-//        isOpen.value = it
-//    }
-//    val userSelectedString: (String) -> Unit = {
-//        text.value = it
-//    }
-//    Box {
-//        Column {
-//            OutlinedTextField(
-//                value = text.value,
-//                onValueChange = { text.value = it },
-//                label = { Text(text = "TextFieldTitle") },
-//                modifier = Modifier.fillMaxWidth()
-//            )
-//            DropDownList(
-//                requestToOpen = isOpen.value,
-//                list = countryList,
-//                openCloseOfDropDownList,
-//                userSelectedString
-//            )
-//        }
-//        Spacer(
-//            modifier = Modifier
-//                .matchParentSize()
-//                .background(Color.Transparent)
-//                .padding(10.dp)
-//                .clickable { isOpen.value = true }
-//        )
-//    }
-//}
 
 @Composable
 fun Header(
@@ -316,6 +226,61 @@ fun GameItem(
     }
 }
 
+// ExposedDropdownMenuBox is experimental
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun <T> Dropdown(
+    title: String,
+    values: List<T>,
+    modifier: Modifier = Modifier,
+    onValueSelected: (T) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOption: T? by remember { mutableStateOf(null) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            expanded = !expanded
+        },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            enabled = values.isNotEmpty(),
+            readOnly = true,
+            value = selectedOption?.toString() ?: "",
+            onValueChange = { Log.i("TOTO", "On text changed $it")},
+            label = { Text(title) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            }
+        ) {
+            values.forEach { selectionOption ->
+                DropdownMenuItem(
+                    onClick = {
+                        onValueSelected(selectionOption)
+                        selectedOption = selectionOption
+                        expanded = false
+                    },
+                ) {
+                    Text(text = selectionOption.toString())
+                }
+            }
+        }
+    }
+
+    if (selectedOption == null && values.isNotEmpty()) {
+        val value = values[0]
+        selectedOption = value
+        onValueSelected(value)
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun HeaderPreview() {
@@ -340,8 +305,9 @@ fun GameItemPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun SpinnerPreview() {
-    Spinner(
+fun DropdownPreview() {
+    Dropdown(
+        title = "Games",
         values = listOf("Sonic", "Sonic2"),
         onValueSelected = {}
     )
