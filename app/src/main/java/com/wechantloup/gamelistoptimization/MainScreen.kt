@@ -249,7 +249,7 @@ fun <T> Dropdown(
             enabled = values.isNotEmpty(),
             readOnly = true,
             value = selectedOption?.toString() ?: "",
-            onValueChange = { Log.i("TOTO", "On text changed $it")},
+            onValueChange = {},
             label = { Text(title) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -274,7 +274,7 @@ fun <T> Dropdown(
         }
     }
 
-    if (selectedOption == null && values.isNotEmpty()) {
+    if (values.isNotEmpty() && (selectedOption == null || !values.contains(selectedOption))) {
         val value = values[0]
         selectedOption = value
         onValueSelected(value)
