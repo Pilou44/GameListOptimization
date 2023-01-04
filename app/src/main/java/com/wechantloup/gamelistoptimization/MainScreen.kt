@@ -49,6 +49,7 @@ fun MainScreen(
         onPlatformSelected = viewModel::setPlatform,
         onForChildClicked = viewModel::onGameSetForKids,
         onFavoriteClicked = viewModel::onGameSetFavorite,
+        isBackupAvailable = viewModel::isBackupAvailable,
         onCopyBackupClicked = viewModel::copyBackupValues,
         onAllChildClicked = viewModel::setAllForKids,
         onAllFavoriteClicked = viewModel::setAllFavorite,
@@ -64,6 +65,7 @@ fun MainScreen(
     onPlatformSelected: (Platform) -> Unit,
     onForChildClicked: (String, Boolean) -> Unit,
     onFavoriteClicked: (String, Boolean) -> Unit,
+    isBackupAvailable: () -> Boolean,
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
@@ -97,6 +99,7 @@ fun MainScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Header(
+                isBackupAvailable = isBackupAvailable,
                 onCopyBackupClicked = onCopyBackupClicked,
                 onAllChildClicked = onAllChildClicked,
                 onAllFavoriteClicked = onAllFavoriteClicked
@@ -114,6 +117,7 @@ fun MainScreen(
 @Composable
 fun Header(
     modifier: Modifier = Modifier,
+    isBackupAvailable: () -> Boolean,
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
@@ -123,6 +127,7 @@ fun Header(
             modifier = Modifier
                 .weight(1f)
                 .align(Alignment.CenterVertically),
+            enabled = isBackupAvailable(),
             onClick = onCopyBackupClicked,
         ) {
             Text(
@@ -288,6 +293,7 @@ fun HeaderPreview() {
         onCopyBackupClicked = {},
         onAllChildClicked = {},
         onAllFavoriteClicked = {},
+        isBackupAvailable = { true },
     )
 }
 
