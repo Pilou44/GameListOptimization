@@ -41,10 +41,7 @@ class MainViewModel(
 
     private val gson = Gson()
 
-    private val gameSources = listOf(
-        Source.NAS,
-        Source.RETROPIE
-    )
+    private val gameSources = Sources.values().map { it.source } .toList()
 
     private var share: DiskShare? = null
     private var currentPlatform: Platform? = null
@@ -82,15 +79,15 @@ class MainViewModel(
         )
     }
 
-    fun onGameSetForKids(gameId: String, value: Boolean) {
+    fun onGameSetForKids(gamePath: String, value: Boolean) {
         val platform = currentPlatform ?: return
-        platform.gameList.games.first { it.id == gameId }.kidgame = value
+        platform.gameList.games.first { it.path == gamePath }.kidgame = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
-    fun onGameSetFavorite(gameId: String, value: Boolean) {
+    fun onGameSetFavorite(gamePath: String, value: Boolean) {
         val platform = currentPlatform ?: return
-        platform.gameList.games.first { it.id == gameId }.favorite = value
+        platform.gameList.games.first { it.path == gamePath }.favorite = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
@@ -191,7 +188,7 @@ class MainViewModel(
                 val filePath = "$folderName\\${GAMELIST_FILE}"
                 share.extractGameList(folderName, GAMELIST_FILE)?.let { it ->
                     val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
-                    platforms.add(Platform(it, gameListBackup, filePath))
+                    platforms.add(Platform(folderName, it, gameListBackup, filePath))
                 }
             }
         }
@@ -203,23 +200,30 @@ class MainViewModel(
 
         if (!fileExists(filePath)) return null
 
-        val readFile = openFile(
-            filePath,
-            EnumSet.of(AccessMask.GENERIC_READ),
-            null,
-            SMB2ShareAccess.ALL,
-            SMB2CreateDisposition.FILE_OPEN,
-            null
-        )
+        Log.i(TAG, "Reading $filePath")
 
-        val inputStream = readFile.inputStream
-        val xmlToJson: XmlToJson = XmlToJson.Builder(inputStream, null).build()
-        inputStream.close()
+        try {
+            val readFile = openFile(
+                filePath,
+                EnumSet.of(AccessMask.GENERIC_READ),
+                null,
+                SMB2ShareAccess.ALL,
+                SMB2CreateDisposition.FILE_OPEN,
+                null
+            )
 
-        val jsonString = xmlToJson.toString()
+            val inputStream = readFile.inputStream
+            val xmlToJson: XmlToJson = XmlToJson.Builder(inputStream, null).build()
+            inputStream.close()
 
-        val holder = gson.fromJson(jsonString, GameListHolder::class.java)
-        return holder.gameList
+            val jsonString = xmlToJson.toString()
+
+            val holder = gson.fromJson(jsonString, GameListHolder::class.java)
+            return holder.gameList
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing $filePath", e)
+            return null
+        }
     }
 
     private fun DiskShare.isFolder(path: String, fileName: String): Boolean =
@@ -236,6 +240,7 @@ class MainViewModel(
     )
 
     companion object {
+        private const val TAG = "MainViewModel"
         private const val GAMELIST_FILE = "gamelist.xml"
         private const val GAMELIST_BACKUP_FILE = "gamelist.backup.xml"
     }

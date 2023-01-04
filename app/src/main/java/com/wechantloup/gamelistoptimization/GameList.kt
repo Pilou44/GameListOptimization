@@ -10,7 +10,7 @@ data class GameListHolder(
 
 @Keep
 data class GameList(
-    @SerializedName("provider") val provider: Provider,
+    @SerializedName("provider") val provider: Provider?,
     @SerializedName("game") val games: List<Game>
 ) {
     fun getGamesCopy() = games.map { it.copy() }
@@ -26,7 +26,7 @@ data class Provider(
 
 @Keep
 data class Game(
-    @SerializedName("id") val id: String,
+    @SerializedName("id") val id: String?,
     @SerializedName("source") val source: String?,
     @SerializedName("path") val path: String,
     @SerializedName("name") val name: String?,
@@ -44,11 +44,4 @@ data class Game(
     @SerializedName("favorite") var favorite: Boolean?,
     @SerializedName("kidgame") var kidgame: Boolean?,
     @SerializedName("hidden") var hidden: Boolean?,
-) {
-    fun isSameAs(item: Game): Boolean = id == item.id
-    fun hasSameContentAs(item: Game): Boolean =
-        name == item.name &&
-            kidgame == item.kidgame &&
-            favorite == item.favorite &&
-            hidden == item.hidden
-}
+)

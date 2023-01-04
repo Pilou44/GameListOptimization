@@ -159,16 +159,16 @@ fun Header(
 fun GameListItem(
     modifier: Modifier = Modifier,
     games: List<Game>,
-    onForChildClicked: (String, Boolean) -> Unit,
-    onFavoriteClicked: (String, Boolean) -> Unit,
+    onForChildClicked: (path: String, Boolean) -> Unit,
+    onFavoriteClicked: (path: String, Boolean) -> Unit,
 ) {
     LazyColumn(modifier) {
         games.forEach { game ->
             item {
                 GameItem(
                     game = game,
-                    onForChildClicked = { checked -> onForChildClicked(game.id, checked) },
-                    onFavoriteClicked = { checked -> onFavoriteClicked(game.id, checked) }
+                    onForChildClicked = { checked -> onForChildClicked(game.path, checked) },
+                    onFavoriteClicked = { checked -> onFavoriteClicked(game.path, checked) }
                 )
             }
         }
