@@ -126,6 +126,10 @@ class MainViewModel(
         viewModelScope.launch { savePlatform(platform) }
     }
 
+    fun onPlatformEditClicked() {
+        // ToDo
+    }
+
     @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
         val share = share ?: return@withContext

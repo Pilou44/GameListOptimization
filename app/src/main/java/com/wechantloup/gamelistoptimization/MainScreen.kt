@@ -52,6 +52,7 @@ fun MainScreen(
         onCopyBackupClicked = viewModel::copyBackupValues,
         onAllChildClicked = viewModel::setAllForKids,
         onAllFavoriteClicked = viewModel::setAllFavorite,
+        onPlatformEditClicked = viewModel::onPlatformEditClicked,
     )
 }
 
@@ -68,6 +69,7 @@ fun MainScreen(
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
+    onPlatformEditClicked: () -> Unit,
 ) {
 
     val scaffoldState = rememberScaffoldState()
@@ -91,10 +93,10 @@ fun MainScreen(
                 onValueSelected = onSourceSelected,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            Dropdown(
-                title = "Platforms",
-                values = platforms,
-                onValueSelected = onPlatformSelected,
+            Platform(
+                platforms = platforms,
+                onPlatformSelected = onPlatformSelected,
+                onEditClicked = onPlatformEditClicked,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Header(
@@ -108,6 +110,35 @@ fun MainScreen(
                 games = games,
                 onForChildClicked = onForChildClicked,
                 onFavoriteClicked = onFavoriteClicked,
+            )
+        }
+    }
+}
+
+@Composable
+fun Platform(
+    modifier: Modifier = Modifier,
+    platforms: List<Platform>,
+    onPlatformSelected: (Platform) -> Unit,
+    onEditClicked: () -> Unit,
+) {
+    Row(modifier = modifier) {
+        Dropdown(
+            title = "Platforms",
+            values = platforms,
+            onValueSelected = onPlatformSelected,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+        IconButton(
+            modifier = Modifier
+                .size(dimensionResource(id = R.dimen.space_xl))
+                .align(Alignment.CenterVertically),
+            onClick = onEditClicked
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_edit_24),
+                contentDescription = "Edit platform name",
+                tint = MaterialTheme.colors.primary,
             )
         }
     }
@@ -305,6 +336,32 @@ fun GameItemPreview() {
         isFavorite = false,
         onForChildClicked = {},
         onFavoriteClicked = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PlatformPreview() {
+    val emptyGameList = GameList(
+        provider = null,
+        games = emptyList(),
+    )
+    val pf1 = Platform(
+        name = "Megadrive",
+        gameList = emptyGameList,
+        gameListBackup = null,
+        path = "",
+    )
+    val pf2 = Platform(
+        name = "Super Nintendo",
+        gameList = emptyGameList,
+        gameListBackup = null,
+        path = "",
+    )
+    Platform(
+        platforms = listOf(pf1, pf2),
+        onPlatformSelected = {},
+        onEditClicked = {},
     )
 }
 
