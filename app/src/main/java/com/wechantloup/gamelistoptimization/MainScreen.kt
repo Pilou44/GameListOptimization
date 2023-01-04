@@ -1,6 +1,5 @@
 package com.wechantloup.gamelistoptimization
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -84,8 +83,8 @@ fun MainScreen(
                 backgroundColor = MaterialTheme.colors.surface,
             )
         }
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Dropdown(
                 title = "Sources",
                 values = sources,
