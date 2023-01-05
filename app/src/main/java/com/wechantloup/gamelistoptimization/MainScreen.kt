@@ -38,21 +38,22 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
+    onEditPlatformClicked: () -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
     MainScreen(
         sources = state.value.sources,
         platforms = state.value.platforms,
         games = state.value.games,
+        isBackupAvailable = state.value.hasBackup,
         onSourceSelected = viewModel::setSource,
         onPlatformSelected = viewModel::setPlatform,
         onForChildClicked = viewModel::onGameSetForKids,
         onFavoriteClicked = viewModel::onGameSetFavorite,
-        isBackupAvailable = viewModel::isBackupAvailable,
         onCopyBackupClicked = viewModel::copyBackupValues,
         onAllChildClicked = viewModel::setAllForKids,
         onAllFavoriteClicked = viewModel::setAllFavorite,
-        onPlatformEditClicked = viewModel::onPlatformEditClicked,
+        onEditPlatformClicked = onEditPlatformClicked,
     )
 }
 
@@ -61,15 +62,15 @@ fun MainScreen(
     sources: List<Source>,
     platforms: List<Platform>,
     games: List<Game>,
+    isBackupAvailable: Boolean,
     onSourceSelected: (Source) -> Unit,
     onPlatformSelected: (Platform) -> Unit,
     onForChildClicked: (String, Boolean) -> Unit,
     onFavoriteClicked: (String, Boolean) -> Unit,
-    isBackupAvailable: () -> Boolean,
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
-    onPlatformEditClicked: () -> Unit,
+    onEditPlatformClicked: () -> Unit,
 ) {
 
     val scaffoldState = rememberScaffoldState()
@@ -96,7 +97,7 @@ fun MainScreen(
             Platform(
                 platforms = platforms,
                 onPlatformSelected = onPlatformSelected,
-                onEditClicked = onPlatformEditClicked,
+                onEditClicked = onEditPlatformClicked,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Header(
@@ -147,7 +148,7 @@ fun Platform(
 @Composable
 fun Header(
     modifier: Modifier = Modifier,
-    isBackupAvailable: () -> Boolean,
+    isBackupAvailable: Boolean,
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
@@ -157,7 +158,7 @@ fun Header(
             modifier = Modifier
                 .weight(1f)
                 .align(Alignment.CenterVertically),
-            enabled = isBackupAvailable(),
+            enabled = isBackupAvailable,
             onClick = onCopyBackupClicked,
         ) {
             Text(
@@ -323,7 +324,7 @@ fun HeaderPreview() {
         onCopyBackupClicked = {},
         onAllChildClicked = {},
         onAllFavoriteClicked = {},
-        isBackupAvailable = { true },
+        isBackupAvailable = true,
     )
 }
 

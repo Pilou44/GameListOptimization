@@ -91,10 +91,6 @@ class MainViewModel(
         viewModelScope.launch { savePlatform(platform) }
     }
 
-    fun isBackupAvailable(): Boolean {
-        return currentPlatform?.gameListBackup?.games?.isNotEmpty() == true
-    }
-
     fun copyBackupValues() {
         val platform = currentPlatform ?: return
         val gameListBackup = platform.gameListBackup ?: return
@@ -124,10 +120,6 @@ class MainViewModel(
             it.kidgame = !allForKids
         }
         viewModelScope.launch { savePlatform(platform) }
-    }
-
-    fun onPlatformEditClicked() {
-        // ToDo
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
