@@ -44,7 +44,6 @@ class MainViewModel(
     private val gameSources = Sources.values().map { it.source } .toList()
 
     private var share: DiskShare? = null
-    private var currentPlatform: Platform? = null
 
     init {
         _stateFlow.value = stateFlow.value.copy(sources = gameSources)
@@ -72,27 +71,27 @@ class MainViewModel(
     }
 
     fun setPlatform(selectedPlatform: Platform) {
-        currentPlatform = selectedPlatform
         _stateFlow.value = stateFlow.value.copy(
+            currentPlatform = selectedPlatform,
             games = selectedPlatform.gameList.getGamesCopy(),
             hasBackup = selectedPlatform.gameListBackup != null,
         )
     }
 
     fun onGameSetForKids(gamePath: String, value: Boolean) {
-        val platform = currentPlatform ?: return
+        val platform = getCurrentPlatform() ?: return
         platform.gameList.games.first { it.path == gamePath }.kidgame = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
     fun onGameSetFavorite(gamePath: String, value: Boolean) {
-        val platform = currentPlatform ?: return
+        val platform = getCurrentPlatform() ?: return
         platform.gameList.games.first { it.path == gamePath }.favorite = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
     fun copyBackupValues() {
-        val platform = currentPlatform ?: return
+        val platform = getCurrentPlatform() ?: return
         val gameListBackup = platform.gameListBackup ?: return
         platform.gameList.games.forEach { game ->
             val backup = gameListBackup.games.firstOrNull { it.id == game.id }
@@ -105,7 +104,7 @@ class MainViewModel(
     }
 
     fun setAllFavorite() {
-        val platform = currentPlatform ?: return
+        val platform = getCurrentPlatform() ?: return
         val allFavorite = platform.gameList.games.all { it.favorite == true }
         platform.gameList.games.forEach {
             it.favorite = !allFavorite
@@ -114,12 +113,20 @@ class MainViewModel(
     }
 
     fun setAllForKids() {
-        val platform = currentPlatform ?: return
+        val platform = getCurrentPlatform() ?: return
         val allForKids = platform.gameList.games.all { it.kidgame == true }
         platform.gameList.games.forEach {
             it.kidgame = !allForKids
         }
         viewModelScope.launch { savePlatform(platform) }
+    }
+
+    fun savePlatformName(name: String) {
+        val platform = getCurrentPlatform() ?: return
+        if (name.isEmpty() || name == platform.name) return
+
+        val newPlatform = platform.copy(name = name)
+        viewModelScope.launch { savePlatform(newPlatform) }
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
@@ -151,9 +158,10 @@ class MainViewModel(
 
         val platforms = getPlatforms()
         val newPlatform = platforms.first { it.path == platform.path }
-        currentPlatform = newPlatform
 
         _stateFlow.value = stateFlow.value.copy(
+            platforms = platforms,
+            currentPlatform = newPlatform,
             games = newPlatform.gameList.getGamesCopy(),
             hasBackup = newPlatform.gameListBackup != null
         )
@@ -194,6 +202,8 @@ class MainViewModel(
         }
         platforms.sortedBy { it.toString() }
     }
+
+    private fun getCurrentPlatform(): Platform? = stateFlow.value.currentPlatform
 
     private fun DiskShare.extractGameList(folderName: String, fileName: String): GameList? {
         val filePath = "$folderName\\$fileName"
@@ -237,6 +247,7 @@ class MainViewModel(
         val platforms: List<Platform> = emptyList(),
         val games: List<Game> = emptyList(),
         val hasBackup: Boolean = false,
+        val currentPlatform: Platform? = null,
     )
 
     companion object {

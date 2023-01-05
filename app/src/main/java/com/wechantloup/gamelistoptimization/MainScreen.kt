@@ -72,7 +72,6 @@ fun MainScreen(
     onAllFavoriteClicked: () -> Unit,
     onEditPlatformClicked: () -> Unit,
 ) {
-
     val scaffoldState = rememberScaffoldState()
     Scaffold(
         scaffoldState = scaffoldState,
@@ -89,7 +88,7 @@ fun MainScreen(
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Dropdown(
-                title = "Sources",
+                title = stringResource(R.string.source),
                 values = sources,
                 onValueSelected = onSourceSelected,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -125,7 +124,7 @@ fun Platform(
 ) {
     Row(modifier = modifier) {
         Dropdown(
-            title = "Platforms",
+            title = stringResource(R.string.platform),
             values = platforms,
             onValueSelected = onPlatformSelected,
             modifier = Modifier.align(Alignment.CenterVertically)

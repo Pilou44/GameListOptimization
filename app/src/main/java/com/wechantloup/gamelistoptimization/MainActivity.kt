@@ -55,7 +55,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             composable(EDIT_PLATFORM_SCREEN) {
-                EditPlatformScreen()
+                EditPlatformScreen(
+                    viewModel = viewModel,
+                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) }
+                )
             }
 
 //            composable(LIVE_SCREEN) {

@@ -1,6 +1,6 @@
 package com.wechantloup.gamelistoptimization
 
-class Platform(
+data class Platform(
     val name: String,
     val gameList: GameList,
     val gameListBackup: GameList?,
