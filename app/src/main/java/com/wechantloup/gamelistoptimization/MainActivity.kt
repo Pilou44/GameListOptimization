@@ -7,10 +7,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.google.accompanist.themeadapter.material.MdcTheme
 
 class MainActivity : AppCompatActivity() {
@@ -22,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val viewModel by viewModels<MainViewModel> {
+    private val mainViewModel by viewModels<MainViewModel> {
         MainViewModelFactory(this)
     }
 
@@ -33,7 +35,7 @@ class MainActivity : AppCompatActivity() {
             MdcTheme {
                 NavigationHost(
                     navController = navController,
-                    viewModel = viewModel,
+                    viewModel = mainViewModel,
                 )
             }
         }
@@ -57,6 +59,23 @@ class MainActivity : AppCompatActivity() {
             composable(EDIT_PLATFORM_SCREEN) {
                 EditPlatformScreen(
                     viewModel = viewModel,
+                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) }
+                )
+            }
+
+            composable(
+                route = GAME_SCREEN,
+                arguments = listOf(
+                    navArgument(ARG_GAME_PATH) {
+                        type = NavType.StringType
+                        nullable = false
+                    },
+                ),
+            ) { backStackEntry ->
+                val gamePath = backStackEntry.arguments?.getString(ARG_GAME_PATH) ?: return@composable
+                GameScreen(
+                    viewModel = viewModel,
+                    gamePath = gamePath,
                     onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) }
                 )
             }
@@ -107,5 +126,8 @@ class MainActivity : AppCompatActivity() {
         // Screens
         private const val MAIN_SCREEN = "main_screen"
         private const val EDIT_PLATFORM_SCREEN = "edit_platform_screen"
+        private const val GAME_SCREEN = "game_screen/{gamePath}"
+
+        private const val ARG_GAME_PATH = "gamePath"
     }
 }
