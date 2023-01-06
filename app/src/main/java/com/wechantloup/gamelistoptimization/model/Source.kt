@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.model
 
 data class Source(
     val name: String,

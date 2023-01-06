@@ -16,6 +16,12 @@ import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.connection.Connection
 import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
+import com.wechantloup.gamelistoptimization.model.Game
+import com.wechantloup.gamelistoptimization.model.GameList
+import com.wechantloup.gamelistoptimization.model.GameListHolder
+import com.wechantloup.gamelistoptimization.model.Platform
+import com.wechantloup.gamelistoptimization.model.Source
+import com.wechantloup.gamelistoptimization.model.Sources
 import fr.arnaudguyon.xmltojsonlib.JsonToXml
 import fr.arnaudguyon.xmltojsonlib.XmlToJson
 import kotlinx.coroutines.Dispatchers

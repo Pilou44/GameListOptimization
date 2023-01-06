@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.model
 
 import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
