@@ -43,6 +43,7 @@ fun MainScreen(
     val state = viewModel.stateFlow.collectAsState()
     MainScreen(
         sources = state.value.sources,
+        currentSource = state.value.currentSource,
         platforms = state.value.platforms,
         games = state.value.games,
         isBackupAvailable = state.value.hasBackup,
@@ -60,6 +61,7 @@ fun MainScreen(
 @Composable
 fun MainScreen(
     sources: List<Source>,
+    currentSource: Source?,
     platforms: List<Platform>,
     games: List<Game>,
     isBackupAvailable: Boolean,
@@ -90,6 +92,7 @@ fun MainScreen(
             Dropdown(
                 title = stringResource(R.string.source),
                 values = sources,
+                selectedValue = currentSource,
                 onValueSelected = onSourceSelected,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -267,11 +270,12 @@ fun GameItem(
 fun <T> Dropdown(
     title: String,
     values: List<T>,
+    selectedValue: T? = null,
     modifier: Modifier = Modifier,
     onValueSelected: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedOption: T? by remember { mutableStateOf(null) }
+    var selectedOption: T? by remember { mutableStateOf(selectedValue) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -343,23 +347,17 @@ fun GameItemPreview() {
 @Composable
 fun PlatformPreview() {
     val emptyGameList = GameList(
+        platform = "Megadrive",
         provider = null,
         games = emptyList(),
     )
     val pf1 = Platform(
-        name = "Megadrive",
-        gameList = emptyGameList,
-        gameListBackup = null,
-        path = "",
-    )
-    val pf2 = Platform(
-        name = "Super Nintendo",
         gameList = emptyGameList,
         gameListBackup = null,
         path = "",
     )
     Platform(
-        platforms = listOf(pf1, pf2),
+        platforms = listOf(pf1),
         onPlatformSelected = {},
         onEditClicked = {},
     )

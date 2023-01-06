@@ -10,8 +10,9 @@ data class GameListHolder(
 
 @Keep
 data class GameList(
+    @SerializedName("platform") val platform: String?,
     @SerializedName("provider") val provider: Provider?,
-    @SerializedName("game") val games: List<Game>
+    @SerializedName("game") val games: List<Game>,
 ) {
     fun getGamesCopy() = games.map { it.copy() }
 }

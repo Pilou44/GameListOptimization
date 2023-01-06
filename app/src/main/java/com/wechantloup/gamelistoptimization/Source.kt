@@ -1,6 +1,6 @@
 package com.wechantloup.gamelistoptimization
 
-class Source(
+data class Source(
     val name: String,
     val ip: String,
     val path: String,

@@ -60,11 +60,14 @@ class MainViewModel(
     @Suppress("BlockingMethodInNonBlockingContext")
     fun setSource(source: Source) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (share?.isConnected == true) {
-                share?.close()
+            if (source != getCurrentSource()) {
+                if (share?.isConnected == true) {
+                    share?.close()
+                }
+                share = source.connectTo()
             }
-            share = source.connectTo()
             _stateFlow.value = stateFlow.value.copy(
+                currentSource = source,
                 platforms = getPlatforms(),
             )
         }
@@ -123,9 +126,10 @@ class MainViewModel(
 
     fun savePlatformName(name: String) {
         val platform = getCurrentPlatform() ?: return
-        if (name.isEmpty() || name == platform.name) return
+        if (name.isEmpty() || name == platform.gameList.platform) return
 
-        val newPlatform = platform.copy(name = name)
+        val newGameList = platform.gameList.copy(platform = name)
+        val newPlatform = platform.copy(gameList = newGameList)
         viewModelScope.launch { savePlatform(newPlatform) }
     }
 
@@ -139,6 +143,7 @@ class MainViewModel(
         val jsonToXml = JsonToXml.Builder(newJson)
             .forceAttribute("/gameList/game/id")
             .forceAttribute("/gameList/game/source")
+            .forceAttribute("/gameList/platform")
             .build()
         val newXml = jsonToXml.toFormattedString(2)
 
@@ -196,7 +201,7 @@ class MainViewModel(
                 val filePath = "$folderName\\${GAMELIST_FILE}"
                 share.extractGameList(folderName, GAMELIST_FILE)?.let { it ->
                     val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
-                    platforms.add(Platform(folderName, it, gameListBackup, filePath))
+                    platforms.add(Platform(it, gameListBackup, filePath))
                 }
             }
         }
@@ -204,6 +209,7 @@ class MainViewModel(
     }
 
     private fun getCurrentPlatform(): Platform? = stateFlow.value.currentPlatform
+    private fun getCurrentSource(): Source? = stateFlow.value.currentSource
 
     private fun DiskShare.extractGameList(folderName: String, fileName: String): GameList? {
         val filePath = "$folderName\\$fileName"
@@ -247,6 +253,7 @@ class MainViewModel(
         val platforms: List<Platform> = emptyList(),
         val games: List<Game> = emptyList(),
         val hasBackup: Boolean = false,
+        val currentSource: Source? = null,
         val currentPlatform: Platform? = null,
     )
 
