@@ -43,12 +43,19 @@ class GameViewModel(
     }
 
     fun openGame(source: Source, platformPath: String, gamePath: String) {
-        Log.d(TAG, "Open game")
-        viewModelScope.launch(Dispatchers.IO) {
-            if (!provider.open(source)) throw IllegalStateException("Can't open source")
+        val currentGamePath = stateFlow.value.game?.path
+        val gameDecodedPath = URLDecoder.decode(gamePath, Charsets.UTF_8.name())
+        val platformDecodedPath = URLDecoder.decode(platformPath, Charsets.UTF_8.name())
 
-            val gameDecodedPath = URLDecoder.decode(gamePath, Charsets.UTF_8.name())
-            val platformDecodedPath = URLDecoder.decode(platformPath, Charsets.UTF_8.name())
+        // ToDo Check source and platform too
+        if (currentGamePath == gameDecodedPath) return
+
+        Log.d(TAG, "Clear data: current='$currentGamePath', path='$gameDecodedPath'")
+        _stateFlow.value = stateFlow.value.copy(game = null)
+
+        Log.d(TAG, "Open game $gameDecodedPath")
+        viewModelScope.launch {
+            if (!provider.open(source)) throw IllegalStateException("Can't open source")
 
             val platform = provider
                 .getPlatforms()
