@@ -1,49 +1,42 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.game
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.wechantloup.gamelistoptimization.BackButton
+import com.wechantloup.gamelistoptimization.R
+import com.wechantloup.gamelistoptimization.model.Game
 
 @Composable
 fun GameScreen(
-    viewModel: MainViewModel,
-    gamePath: String,
+    viewModel: GameViewModel,
     onBackPressed: () -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
     GameScreen(
-        platformName = gamePath,
-        saveName = viewModel::savePlatformName,
+        game = state.value.game,
         onBackPressed = onBackPressed,
     )
 }
 
 @Composable
 fun GameScreen(
-    platformName: String,
-    saveName: (String) -> Unit,
+    game: Game?,
     onBackPressed: () -> Unit,
 ) {
-    var name by remember { mutableStateOf(platformName) }
-
     val saveAndGoBack: () -> Unit = {
-        saveName(name)
+//        saveName(name) Todo
         onBackPressed()
     }
 
@@ -52,6 +45,7 @@ fun GameScreen(
     }
 
     val scaffoldState = rememberScaffoldState()
+
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
@@ -66,16 +60,14 @@ fun GameScreen(
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            TextField(
-                modifier = Modifier.align(Alignment.Center),
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Label") }
-            )
+            Row() {
+                Text(text = game?.name ?: game?.path ?: "")
+            }
         }
     }
 }

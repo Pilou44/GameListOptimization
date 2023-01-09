@@ -128,7 +128,7 @@ class GameListProvider {
             session = connection.authenticate(ac)
             (session.connectShare(path) as DiskShare)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Can't connect to source", e)
             session?.close()
             connection?.close()
             null

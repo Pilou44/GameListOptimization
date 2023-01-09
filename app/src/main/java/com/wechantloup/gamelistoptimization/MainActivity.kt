@@ -14,6 +14,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.accompanist.themeadapter.material.MdcTheme
+import com.wechantloup.gamelistoptimization.game.GameScreen
+import com.wechantloup.gamelistoptimization.game.GameViewModel
+import com.wechantloup.gamelistoptimization.game.GameViewModelFactory
+import com.wechantloup.gamelistoptimization.model.Source
+import com.wechantloup.gamelistoptimization.utils.deserialize
+import java.net.URLEncoder
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,8 +30,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val provider = GameListProvider()
+
     private val mainViewModel by viewModels<MainViewModel> {
-        MainViewModelFactory(this)
+        MainViewModelFactory(this, provider)
+    }
+
+    private val gameViewModel by viewModels<GameViewModel> {
+        GameViewModelFactory(this, provider)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +64,13 @@ class MainActivity : AppCompatActivity() {
             composable(MAIN_SCREEN) {
                 MainScreen(
                     viewModel = viewModel,
-                    onEditPlatformClicked = { navController.navigate(EDIT_PLATFORM_SCREEN) }
+                    onEditPlatformClicked = { navController.navigate(EDIT_PLATFORM_SCREEN) },
+                    onGameClicked = { source, platform, game ->
+                        val encodedSource = URLEncoder.encode(source, Charsets.UTF_8.name());
+                        val encodedPlatform = URLEncoder.encode(platform, Charsets.UTF_8.name());
+                        val encodedGame = URLEncoder.encode(game, Charsets.UTF_8.name());
+                        navController.navigate("$GAME_SCREEN_NAME/$encodedSource/$encodedPlatform/$encodedGame")
+                    },
                 )
             }
 
@@ -70,64 +88,39 @@ class MainActivity : AppCompatActivity() {
                         type = NavType.StringType
                         nullable = false
                     },
+                    navArgument(ARG_PLATFORM_PATH) {
+                        type = NavType.StringType
+                        nullable = false
+                    },
+                    navArgument(ARG_SERIALIZED_SOURCE) {
+                        type = NavType.StringType
+                        nullable = false
+                    },
                 ),
             ) { backStackEntry ->
+                val source: Source = backStackEntry.arguments?.getString(ARG_SERIALIZED_SOURCE)?.deserialize() ?: return@composable
+                val platformPath = backStackEntry.arguments?.getString(ARG_PLATFORM_PATH) ?: return@composable
                 val gamePath = backStackEntry.arguments?.getString(ARG_GAME_PATH) ?: return@composable
+                gameViewModel.openGame(source, platformPath, gamePath)
                 GameScreen(
-                    viewModel = viewModel,
-                    gamePath = gamePath,
+                    viewModel = gameViewModel,
                     onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) }
                 )
             }
-
-//            composable(LIVE_SCREEN) {
-//                LivePhotoScreen(
-//                    liveViewModel = liveViewModel,
-//                    takePhoto = { liveViewModel.takePhoto() },
-//                    ratio = ratio,
-//                )
-//            }
-//
-//            composable(
-//                route = PRINT_SCREEN,
-//                arguments = listOf(
-//                    navArgument(ARG_PHOTO_ID) {
-//                        type = NavType.StringType
-//                        nullable = false
-//                    }
-//                ),
-//            ) { backStackEntry ->
-//                val photoId = backStackEntry.arguments?.getString(ARG_PHOTO_ID) ?: return@composable
-//                printViewModel.newPhoto(photoId)
-//                PrintPhotoScreen(printViewModel = printViewModel)
-//            }
-//
-//            composable(WAITING_FOR_PRINT_SCREEN) {
-//                WaitingForPrintScreen(
-//                    onFinish = { navController.popBackStack(route = STAND_BY_SCREEN, inclusive = false) }
-//                )
-//            }
-//
-//            composable(route = ADMINISTRATION_SCREEN) {
-//                AdministrationScreen(scaffoldState, administrationViewModel)
-//            }
-//
-//            composable(route = RELOAD_PRINTER_SCREEN) {
-//                ReloadPrinterScreen(
-//                    onReloadFinished = { navController.popBackStack(route = STAND_BY_SCREEN, inclusive = false) }
-//                )
-//            }
         }
     }
 
     companion object {
         private const val TAG = "MainActivity"
 
+        private const val ARG_GAME_PATH = "gamePath"
+        private const val ARG_PLATFORM_PATH = "argPlatformPath"
+        private const val ARG_SERIALIZED_SOURCE = "argSerializedSource"
+
         // Screens
         private const val MAIN_SCREEN = "main_screen"
         private const val EDIT_PLATFORM_SCREEN = "edit_platform_screen"
-        private const val GAME_SCREEN = "game_screen/{gamePath}"
-
-        private const val ARG_GAME_PATH = "gamePath"
+        private const val GAME_SCREEN_NAME = "game_screen"
+        private const val GAME_SCREEN = "$GAME_SCREEN_NAME/{$ARG_SERIALIZED_SOURCE}/{$ARG_PLATFORM_PATH}/{$ARG_GAME_PATH}"
     }
 }

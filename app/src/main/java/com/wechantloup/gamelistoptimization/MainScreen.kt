@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
@@ -38,17 +39,20 @@ import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.GameList
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
+import com.wechantloup.gamelistoptimization.utils.serialize
 
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
     onEditPlatformClicked: () -> Unit,
+    onGameClicked: (serializedSource: String, platformPath: String, gamePath: String) -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
     MainScreen(
         sources = state.value.sources,
         currentSource = state.value.currentSource,
         platforms = state.value.platforms,
+        currentPlatform = state.value.currentPlatform,
         games = state.value.games,
         isBackupAvailable = state.value.hasBackup,
         onSourceSelected = viewModel::setSource,
@@ -59,6 +63,7 @@ fun MainScreen(
         onAllChildClicked = viewModel::setAllForKids,
         onAllFavoriteClicked = viewModel::setAllFavorite,
         onEditPlatformClicked = onEditPlatformClicked,
+        onGameClicked = onGameClicked,
     )
 }
 
@@ -67,6 +72,7 @@ fun MainScreen(
     sources: List<Source>,
     currentSource: Source?,
     platforms: List<Platform>,
+    currentPlatform: Platform?,
     games: List<Game>,
     isBackupAvailable: Boolean,
     onSourceSelected: (Source) -> Unit,
@@ -77,6 +83,7 @@ fun MainScreen(
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
     onEditPlatformClicked: () -> Unit,
+    onGameClicked: (serializedSource: String, platformPath: String, gamePath: String) -> Unit,
 ) {
     val scaffoldState = rememberScaffoldState()
     Scaffold(
@@ -92,7 +99,9 @@ fun MainScreen(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
             Dropdown(
                 title = stringResource(R.string.source),
                 values = sources,
@@ -115,8 +124,11 @@ fun MainScreen(
             GameListItem(
                 modifier = Modifier.weight(1f),
                 games = games,
+                source = currentSource.serialize(),
+                platformPath = currentPlatform?.path,
                 onForChildClicked = onForChildClicked,
                 onFavoriteClicked = onFavoriteClicked,
+                onGameClicked = onGameClicked,
             )
         }
     }
@@ -201,8 +213,11 @@ fun Header(
 fun GameListItem(
     modifier: Modifier = Modifier,
     games: List<Game>,
+    source: String,
+    platformPath: String?,
     onForChildClicked: (path: String, Boolean) -> Unit,
     onFavoriteClicked: (path: String, Boolean) -> Unit,
+    onGameClicked: (serializedSource: String, platformPath: String, gamePath: String) -> Unit,
 ) {
     LazyColumn(modifier) {
         games.forEach { game ->
@@ -210,7 +225,8 @@ fun GameListItem(
                 GameItem(
                     game = game,
                     onForChildClicked = { checked -> onForChildClicked(game.path, checked) },
-                    onFavoriteClicked = { checked -> onFavoriteClicked(game.path, checked) }
+                    onFavoriteClicked = { checked -> onFavoriteClicked(game.path, checked) },
+                    onGameClicked = { onGameClicked(source, requireNotNull(platformPath), game.path) }
                 )
             }
         }
@@ -223,6 +239,7 @@ fun GameItem(
     game: Game,
     onForChildClicked: (Boolean) -> Unit,
     onFavoriteClicked: (Boolean) -> Unit,
+    onGameClicked: () -> Unit,
 ) {
     GameItem(
         modifier = modifier,
@@ -231,9 +248,11 @@ fun GameItem(
         game.favorite ?: false,
         onForChildClicked,
         onFavoriteClicked,
+        onGameClicked,
     )
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun GameItem(
     modifier: Modifier = Modifier,
@@ -242,29 +261,35 @@ fun GameItem(
     isFavorite: Boolean,
     onForChildClicked: (Boolean) -> Unit,
     onFavoriteClicked: (Boolean) -> Unit,
+    onGameClicked: () -> Unit,
 ) {
-    Row(modifier = modifier.fillMaxWidth()) {
-        Text(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .weight(1f)
-                .padding(dimensionResource(R.dimen.space_s)),
-            text = name,
-        )
-        Checkbox(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .width(dimensionResource(id = R.dimen.space_xl)),
-            checked = isForChild,
-            onCheckedChange = onForChildClicked,
-        )
-        Checkbox(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .width(dimensionResource(id = R.dimen.space_xl)),
-            checked = isFavorite,
-            onCheckedChange = onFavoriteClicked,
-        )
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onGameClicked,
+    ) {
+        Row {
+            Text(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .weight(1f)
+                    .padding(dimensionResource(R.dimen.space_s)),
+                text = name,
+            )
+            Checkbox(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .width(dimensionResource(id = R.dimen.space_xl)),
+                checked = isForChild,
+                onCheckedChange = onForChildClicked,
+            )
+            Checkbox(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .width(dimensionResource(id = R.dimen.space_xl)),
+                checked = isFavorite,
+                onCheckedChange = onFavoriteClicked,
+            )
+        }
     }
 }
 
@@ -272,10 +297,10 @@ fun GameItem(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T> Dropdown(
+    modifier: Modifier = Modifier,
     title: String,
     values: List<T>,
     selectedValue: T? = null,
-    modifier: Modifier = Modifier,
     onValueSelected: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -344,6 +369,7 @@ fun GameItemPreview() {
         isFavorite = false,
         onForChildClicked = {},
         onFavoriteClicked = {},
+        onGameClicked = {},
     )
 }
 

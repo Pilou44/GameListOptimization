@@ -14,26 +14,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class MainViewModelFactory(private val activity: Activity) : ViewModelProvider.Factory {
+class MainViewModelFactory(
+    private val activity: Activity,
+    private val provider: GameListProvider,
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return MainViewModel(activity.application) as T
+        return MainViewModel(activity.application, provider) as T
     }
 }
 
 class MainViewModel(
     application: Application,
+    private val provider: GameListProvider,
 ) : AndroidViewModel(application) {
 
     private val _stateFlow = MutableStateFlow(State())
     val stateFlow: StateFlow<State> = _stateFlow
 
-//    private val gson = Gson()
-
     private val gameSources = Sources.values().map { it.source } .toList()
-
-//    private var share: DiskShare? = null
-    private val provider = GameListProvider()
 
     init {
         _stateFlow.value = stateFlow.value.copy(sources = gameSources)
@@ -46,7 +45,6 @@ class MainViewModel(
         }
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     fun setSource(source: Source) {
         viewModelScope.launch {
             if (provider.open(source)) {
