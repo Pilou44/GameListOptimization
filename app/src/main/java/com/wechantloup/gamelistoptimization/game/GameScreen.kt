@@ -1,13 +1,10 @@
 package com.wechantloup.gamelistoptimization.game
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -16,7 +13,6 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -83,7 +79,21 @@ private fun GameScreen(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     modifier = Modifier.padding(Dimens.spacingS),
-                    text = game?.name ?: game?.path ?: ""
+                    text = game?.name ?: game?.path ?: "",
+                )
+                Field(
+                    modifier = Modifier.padding(Dimens.spacingS),
+                    name = stringResource(R.string.game_developer),
+                    value = game?.developer ?: "",
+                )
+                Field(
+                    modifier = Modifier.padding(Dimens.spacingS),
+                    name = stringResource(R.string.game_publisher),
+                    value = game?.publisher ?: "",
+                )
+                Text(
+                    modifier = Modifier.padding(Dimens.spacingS),
+                    text = game?.desc ?: "",
                 )
             }
             GlideImage(
@@ -92,5 +102,23 @@ private fun GameScreen(
                 contentDescription = game?.name,
             )
         }
+    }
+}
+
+@Composable
+private fun Field(
+    modifier: Modifier = Modifier,
+    name: String,
+    value: String,
+) {
+    Row(modifier = modifier) {
+        Text(
+            modifier = Modifier,
+            text = name,
+        )
+        Text(
+            modifier = Modifier.padding(start = Dimens.spacingXs),
+            text = value,
+        )
     }
 }

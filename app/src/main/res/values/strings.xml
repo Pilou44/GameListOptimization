@@ -7,4 +7,17 @@
     <string name="source">Source</string>
 
     <string name="button_label_copy_backup">Copy values from backup</string>
+
+    <!-- Platform name edition -->
+    <string name="edit_platform_name_label">Platform name</string>
+
+    <!-- Game edition -->
+    <string name="game_name">Name:</string>
+    <string name="game_developer">Developer:</string>
+    <string name="game_desc">Description:</string>
+    <string name="game_genre">Genre:</string>
+    <string name="game_players">Players:</string>
+    <string name="game_publisher">Publisher:</string>
+    <string name="game_rating">Rating:</string>
+    <string name="game_release_date">Release date:</string>
 </resources>

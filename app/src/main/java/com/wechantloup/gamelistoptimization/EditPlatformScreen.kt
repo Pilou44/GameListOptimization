@@ -76,7 +76,7 @@ fun EditPlatformScreen(
             .padding(paddingValues)
         ) {
             TextField(
-                modifier =Modifier.align(Alignment.Center),
+                modifier = Modifier.align(Alignment.Center),
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Label") }
