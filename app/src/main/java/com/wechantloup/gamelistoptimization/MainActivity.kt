@@ -13,11 +13,11 @@ import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.accompanist.themeadapter.material.MdcTheme
 import com.wechantloup.gamelistoptimization.game.GameScreen
 import com.wechantloup.gamelistoptimization.game.GameViewModel
 import com.wechantloup.gamelistoptimization.game.GameViewModelFactory
 import com.wechantloup.gamelistoptimization.model.Source
+import com.wechantloup.gamelistoptimization.theme.WechantTheme
 import com.wechantloup.gamelistoptimization.utils.deserialize
 import java.net.URLEncoder
 
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MdcTheme {
+            WechantTheme {
                 NavigationHost(
                     navController = navController,
                     viewModel = mainViewModel,
@@ -66,9 +66,9 @@ class MainActivity : AppCompatActivity() {
                     viewModel = viewModel,
                     onEditPlatformClicked = { navController.navigate(EDIT_PLATFORM_SCREEN) },
                     onGameClicked = { source, platform, game ->
-                        val encodedSource = URLEncoder.encode(source, Charsets.UTF_8.name());
-                        val encodedPlatform = URLEncoder.encode(platform, Charsets.UTF_8.name());
-                        val encodedGame = URLEncoder.encode(game, Charsets.UTF_8.name());
+                        val encodedSource = URLEncoder.encode(source, Charsets.UTF_8.name())
+                        val encodedPlatform = URLEncoder.encode(platform, Charsets.UTF_8.name())
+                        val encodedGame = URLEncoder.encode(game, Charsets.UTF_8.name())
                         navController.navigate("$GAME_SCREEN_NAME/$encodedSource/$encodedPlatform/$encodedGame")
                     },
                 )

@@ -1,10 +1,13 @@
 package com.wechantloup.gamelistoptimization.game
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -13,12 +16,14 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.wechantloup.gamelistoptimization.BackButton
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.model.Game
+import com.wechantloup.gamelistoptimization.theme.Dimens
 
 @Composable
 fun GameScreen(
@@ -65,19 +70,27 @@ private fun GameScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(
+                    top = Dimens.spacingS,
+                    start = Dimens.spacingS,
+                    end = Dimens.spacingS,
+                    bottom = Dimens.spacingS + paddingValues.calculateBottomPadding(),
+                )
         ) {
-            Row() {
-                Text(text = game?.name ?: game?.path ?: "")
-                GlideImage(
-                    model = image,
-                    contentDescription = game?.name,
-//                    modifier = Modifier.padding(padding).clickable(onClick = onClick).fillParentMaxSize(),
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    modifier = Modifier.padding(Dimens.spacingS),
+                    text = game?.name ?: game?.path ?: ""
                 )
             }
+            GlideImage(
+                modifier = Modifier.weight(1f).padding(Dimens.spacingS),
+                model = image,
+                contentDescription = game?.name,
+            )
         }
     }
 }
