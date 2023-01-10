@@ -11,6 +11,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.wechantloup.gamelistoptimization.game.EditGameScreen
 import com.wechantloup.gamelistoptimization.game.GameScreen
 import com.wechantloup.gamelistoptimization.game.GameViewModel
 import com.wechantloup.gamelistoptimization.game.GameViewModelFactory
@@ -70,14 +71,24 @@ class MainActivity : AppCompatActivity() {
             composable(EDIT_PLATFORM_SCREEN) {
                 EditPlatformScreen(
                     viewModel = viewModel,
-                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) }
+                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) },
                 )
             }
 
             composable(GAME_SCREEN) {
                 GameScreen(
                     viewModel = gameViewModel,
-                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) }
+                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) },
+                    onEditClicked = {
+                        navController.navigate(EDIT_GAME_SCREEN)
+                    },
+                )
+            }
+
+            composable(EDIT_GAME_SCREEN) {
+                EditGameScreen(
+                    viewModel = gameViewModel,
+                    onBackPressed = { navController.popBackStack(route = GAME_SCREEN, inclusive = false) },
                 )
             }
         }
@@ -90,5 +101,6 @@ class MainActivity : AppCompatActivity() {
         private const val MAIN_SCREEN = "main_screen"
         private const val EDIT_PLATFORM_SCREEN = "edit_platform_screen"
         private const val GAME_SCREEN = "game_screen"
+        private const val EDIT_GAME_SCREEN = "edit_game_screen"
     }
 }

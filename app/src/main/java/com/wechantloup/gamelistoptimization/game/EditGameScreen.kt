@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -23,28 +27,27 @@ import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.theme.Dimens
 
 @Composable
-fun GameScreen(
+fun EditGameScreen(
     viewModel: GameViewModel,
     onBackPressed: () -> Unit,
-    onEditClicked: () -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
-    GameScreen(
-        game = state.value.game,
+    EditGameScreen(
+        editableGame = requireNotNull(state.value.game),
         image = state.value.image,
         onBackPressed = onBackPressed,
-        onEditClicked = onEditClicked,
     )
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun GameScreen(
-    game: Game?,
+private fun EditGameScreen(
+    editableGame: Game,
     image: String?,
     onBackPressed: () -> Unit,
-    onEditClicked: () -> Unit,
 ) {
+    var game by remember { mutableStateOf(editableGame) }
+
     val saveAndGoBack: () -> Unit = {
 //        saveName(name) Todo
         onBackPressed()
@@ -67,11 +70,6 @@ private fun GameScreen(
                 },
                 backgroundColor = MaterialTheme.colors.surface,
                 navigationIcon = { BackButton(onBackPressed = saveAndGoBack) },
-                actions = {
-                    Button(onClick = onEditClicked) {
-                        Text(text = "Edit")
-                    }
-                }
             )
         }
     ) { paddingValues ->
@@ -86,31 +84,31 @@ private fun GameScreen(
                 )
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
+                TextField(
                     modifier = Modifier.padding(Dimens.spacingS),
-                    text = game?.name ?: game?.path ?: "",
+                    value = game.name ?: game.path,
+                    onValueChange = { game = game.copy(name = it) },
+                    label = { Text(stringResource(R.string.game_name)) },
                 )
                 Field(
                     modifier = Modifier.padding(Dimens.spacingS),
                     name = stringResource(R.string.game_developer),
-                    value = game?.developer ?: "",
+                    value = game.developer ?: "",
                 )
                 Field(
                     modifier = Modifier.padding(Dimens.spacingS),
                     name = stringResource(R.string.game_publisher),
-                    value = game?.publisher ?: "",
+                    value = game.publisher ?: "",
                 )
                 Text(
                     modifier = Modifier.padding(Dimens.spacingS),
-                    text = game?.desc ?: "",
+                    text = game.desc ?: "",
                 )
             }
             GlideImage(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(Dimens.spacingS),
+                modifier = Modifier.weight(1f).padding(Dimens.spacingS),
                 model = image,
-                contentDescription = game?.name,
+                contentDescription = game.name,
             )
         }
     }
