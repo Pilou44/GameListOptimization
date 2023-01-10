@@ -10,6 +10,7 @@ import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.connection.Connection
 import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
+import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.GameList
 import com.wechantloup.gamelistoptimization.model.GameListHolder
 import com.wechantloup.gamelistoptimization.model.Platform
@@ -18,6 +19,9 @@ import fr.arnaudguyon.xmltojsonlib.JsonToXml
 import fr.arnaudguyon.xmltojsonlib.XmlToJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.EnumSet
 
 class GameListProvider {
@@ -88,6 +92,48 @@ class GameListProvider {
         }
     }
 
+    suspend fun downloadGameImage(game: Game, platformPath: String, cachedImage: File): Boolean = withContext(Dispatchers.IO) {
+        val share = share ?: throw IllegalStateException("Not connected")
+
+        if (game.image == null) return@withContext false
+
+        val path = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
+        val imagePath = "$path${game.image}"
+            .replace("/", "\\")
+            .replace("\\.\\", "\\")
+        Log.d(TAG, "Image path = $imagePath")
+        val src = share.openFile(
+            imagePath,
+            EnumSet.of(AccessMask.GENERIC_READ),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OPEN,
+            null
+        )
+        val inputStream = src.inputStream
+
+        if (!cachedImage.exists()) {
+            cachedImage.createNewFile()
+        }
+        val outputStream = cachedImage.outputStream()
+
+        outputStream.use { output ->
+            inputStream.use { input ->
+                copy(input, output)
+            }
+        }
+
+        return@withContext true
+    }
+
+    private fun copy(source: InputStream, target: OutputStream) {
+        val buf = ByteArray(8192)
+        var length: Int
+        while (source.read(buf).also { length = it } != -1) {
+            target.write(buf, 0, length)
+        }
+    }
+
     private fun DiskShare.extractGameList(folderName: String, fileName: String): GameList? {
         val filePath = "$folderName\\$fileName"
 
@@ -144,7 +190,8 @@ class GameListProvider {
 
     companion object {
         private const val TAG = "GameListProvider"
-        private const val GAMELIST_FILE = "gamelist.xml"
+
+        const val GAMELIST_FILE = "gamelist.xml"
         private const val GAMELIST_BACKUP_FILE = "gamelist.backup.xml"
     }
 }
