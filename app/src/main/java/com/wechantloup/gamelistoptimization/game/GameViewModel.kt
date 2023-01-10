@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.URLDecoder
 import java.net.URLEncoder
 
 class GameViewModelFactory(
@@ -46,37 +45,23 @@ class GameViewModel(
         }
     }
 
-    fun openGame(source: Source, platformPath: String, gamePath: String) {
+    fun openGame(source: Source, platform: Platform, game: Game) {
         val currentSource = getCurrentSource()
-        val currentPlatformPath = getCurrentPlatform()?.path
-        val currentGamePath = getCurrentGame()?.path
-        val gameDecodedPath = URLDecoder.decode(gamePath, Charsets.UTF_8.name())
-        val platformDecodedPath = URLDecoder.decode(platformPath, Charsets.UTF_8.name())
+        val currentPlatform = getCurrentPlatform()
+        val currentGame = getCurrentGame()
 
-        val isSameSource = source == currentSource
-        val isSamePlatform = currentPlatformPath == platformDecodedPath
-        val isSameGame = currentGamePath == gameDecodedPath
+        val isSameSource = currentSource == source
+        val isSamePlatform = currentPlatform == platform
+        val isSameGame = currentGame == game
 
         if (isSameSource && isSamePlatform && isSameGame) return
 
         Log.d(TAG, "Clear data: isSameSource='$isSameSource', isSamePlatform='$isSamePlatform', isSameGame='$isSameGame'")
         _stateFlow.value = stateFlow.value.copy(source = null, platform = null, game = null, image = null)
 
-        Log.d(TAG, "Open game $gameDecodedPath")
+        Log.d(TAG, "Open game")
+        _stateFlow.value = stateFlow.value.copy(source = source, platform = platform, game = game)
         viewModelScope.launch {
-            if (!provider.open(source)) throw IllegalStateException("Can't open source")
-
-            val platform = provider
-                .getPlatforms()
-                .firstOrNull { it.path == platformDecodedPath }
-                ?: throw IllegalStateException("Can't find platform")
-
-            val game = platform.gameList.games
-                .firstOrNull { it.path == gameDecodedPath }
-                ?: throw IllegalStateException("Can't find game")
-
-            _stateFlow.value = stateFlow.value.copy(source = source, platform = platform, game = game)
-
             game.retrieveImage(source, platform)
         }
     }

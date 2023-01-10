@@ -39,13 +39,12 @@ import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.GameList
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
-import com.wechantloup.gamelistoptimization.utils.serialize
 
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
     onEditPlatformClicked: () -> Unit,
-    onGameClicked: (serializedSource: String, platformPath: String, gamePath: String) -> Unit,
+    onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
     MainScreen(
@@ -83,7 +82,7 @@ fun MainScreen(
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
     onEditPlatformClicked: () -> Unit,
-    onGameClicked: (serializedSource: String, platformPath: String, gamePath: String) -> Unit,
+    onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     val scaffoldState = rememberScaffoldState()
     Scaffold(
@@ -125,8 +124,8 @@ fun MainScreen(
             GameListItem(
                 modifier = Modifier.weight(1f),
                 games = games,
-                source = currentSource.serialize(),
-                platformPath = currentPlatform?.path,
+                source = currentSource,
+                platform = currentPlatform,
                 onForChildClicked = onForChildClicked,
                 onFavoriteClicked = onFavoriteClicked,
                 onGameClicked = onGameClicked,
@@ -216,11 +215,11 @@ fun Header(
 fun GameListItem(
     modifier: Modifier = Modifier,
     games: List<Game>,
-    source: String,
-    platformPath: String?,
+    source: Source?,
+    platform: Platform?,
     onForChildClicked: (path: String, Boolean) -> Unit,
     onFavoriteClicked: (path: String, Boolean) -> Unit,
-    onGameClicked: (serializedSource: String, platformPath: String, gamePath: String) -> Unit,
+    onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     LazyColumn(modifier) {
         games.forEach { game ->
@@ -229,7 +228,7 @@ fun GameListItem(
                     game = game,
                     onForChildClicked = { checked -> onForChildClicked(game.path, checked) },
                     onFavoriteClicked = { checked -> onFavoriteClicked(game.path, checked) },
-                    onGameClicked = { onGameClicked(source, requireNotNull(platformPath), game.path) }
+                    onGameClicked = { onGameClicked(requireNotNull(source), requireNotNull(platform), game) }
                 )
             }
         }
