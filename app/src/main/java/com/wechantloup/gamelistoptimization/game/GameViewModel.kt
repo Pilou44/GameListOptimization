@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.gamelistoptimization.GameListProvider
 import com.wechantloup.gamelistoptimization.model.Game
+import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,15 +44,20 @@ class GameViewModel(
     }
 
     fun openGame(source: Source, platformPath: String, gamePath: String) {
-        val currentGamePath = stateFlow.value.game?.path
+        val currentSource = getCurrentSource()
+        val currentPlatformPath = getCurrentPlatform()?.path
+        val currentGamePath = getCurrentGame()?.path
         val gameDecodedPath = URLDecoder.decode(gamePath, Charsets.UTF_8.name())
         val platformDecodedPath = URLDecoder.decode(platformPath, Charsets.UTF_8.name())
 
-        // ToDo Check source and platform too
-        if (currentGamePath == gameDecodedPath) return
+        val isSameSource = source == currentSource
+        val isSamePlatform = currentPlatformPath == platformDecodedPath
+        val isSameGame = currentGamePath == gameDecodedPath
 
-        Log.d(TAG, "Clear data: current='$currentGamePath', path='$gameDecodedPath'")
-        _stateFlow.value = stateFlow.value.copy(game = null)
+        if (isSameSource && isSamePlatform && isSameGame) return
+
+        Log.d(TAG, "Clear data: isSameSource='$isSameSource', isSamePlatform='$isSamePlatform', isSameGame='$isSameGame'")
+        _stateFlow.value = stateFlow.value.copy(source = null, platform = null, game = null)
 
         Log.d(TAG, "Open game $gameDecodedPath")
         viewModelScope.launch {
@@ -66,11 +72,17 @@ class GameViewModel(
                 .firstOrNull { it.path == gameDecodedPath }
                 ?: throw IllegalStateException("Can't find game")
 
-            _stateFlow.value = stateFlow.value.copy(game = game)
+            _stateFlow.value = stateFlow.value.copy(source = source, platform = platform, game = game)
         }
     }
 
+    private fun getCurrentSource(): Source? = stateFlow.value.source
+    private fun getCurrentPlatform(): Platform? = stateFlow.value.platform
+    private fun getCurrentGame(): Game? = stateFlow.value.game
+
     data class State(
+        val source: Source? = null,
+        val platform: Platform? = null,
         val game: Game? = null,
     )
 

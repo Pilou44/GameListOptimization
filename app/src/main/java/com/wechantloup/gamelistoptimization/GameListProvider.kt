@@ -40,6 +40,7 @@ class GameListProvider {
     suspend fun close() = withContext(Dispatchers.IO) {
         currentSource = null
         share?.close()
+        share = null
     }
 
     suspend fun getPlatforms(): List<Platform> = withContext(Dispatchers.IO) {
