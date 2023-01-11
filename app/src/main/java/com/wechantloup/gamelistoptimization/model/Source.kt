@@ -1,12 +1,14 @@
 package com.wechantloup.gamelistoptimization.model
 
+import com.wechantloup.gamelistoptimization.compose.DropdownComparable
+
 data class Source(
     val name: String,
     val ip: String,
     val path: String,
     val login: String,
     val password: String
-) {
+): DropdownComparable {
 
     override fun toString(): String = name
 

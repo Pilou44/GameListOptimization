@@ -82,7 +82,10 @@ class MainActivity : AppCompatActivity() {
             composable(GAME_SCREEN) {
                 GameScreen(
                     viewModel = gameViewModel,
-                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) },
+                    onBackPressed = {
+                        mainViewModel.refresh()
+                        navController.popBackStack(route = MAIN_SCREEN, inclusive = false)
+                    },
                     onEditClicked = {
                         navController.navigate(EDIT_GAME_SCREEN)
                     },

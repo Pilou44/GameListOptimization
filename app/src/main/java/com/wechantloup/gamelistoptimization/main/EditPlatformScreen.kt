@@ -33,7 +33,8 @@ fun EditPlatformScreen(
     onBackPressed: () -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
-    val platformName = requireNotNull(state.value.currentPlatform).toString()
+    val platform = state.value.platforms[state.value.currentPlatformIndex]
+    val platformName = platform.toString()
     EditPlatformScreen(
         platformName = platformName,
         saveName = viewModel::savePlatformName,

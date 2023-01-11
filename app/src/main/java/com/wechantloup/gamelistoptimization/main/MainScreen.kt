@@ -1,5 +1,6 @@
 package com.wechantloup.gamelistoptimization.main
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,14 +11,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ExposedDropdownMenuBox
-import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -25,10 +22,6 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -36,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.wechantloup.gamelistoptimization.R
+import com.wechantloup.gamelistoptimization.compose.Dropdown
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.GameList
 import com.wechantloup.gamelistoptimization.model.Platform
@@ -45,15 +39,14 @@ import com.wechantloup.gamelistoptimization.model.Source
 fun MainScreen(
     viewModel: MainViewModel,
     onEditPlatformClicked: () -> Unit,
-    onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
+    onGameClicked: (Source, Platform, Game) -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
     MainScreen(
         sources = state.value.sources,
-        currentSource = state.value.currentSource,
+        currentSourceIndex = state.value.currentSourceIndex,
         platforms = state.value.platforms,
-        currentPlatform = state.value.currentPlatform,
-        games = state.value.games,
+        currentPlatformIndex = state.value.currentPlatformIndex,
         isBackupAvailable = state.value.hasBackup,
         onSourceSelected = viewModel::setSource,
         onPlatformSelected = viewModel::setPlatform,
@@ -70,10 +63,9 @@ fun MainScreen(
 @Composable
 fun MainScreen(
     sources: List<Source>,
-    currentSource: Source?,
+    currentSourceIndex: Int,
     platforms: List<Platform>,
-    currentPlatform: Platform?,
-    games: List<Game>,
+    currentPlatformIndex: Int,
     isBackupAvailable: Boolean,
     onSourceSelected: (Source) -> Unit,
     onPlatformSelected: (Platform) -> Unit,
@@ -102,6 +94,8 @@ fun MainScreen(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
+            val currentSource = if (currentSourceIndex == -1) null else sources[currentSourceIndex]
+            val currentPlatform = if (currentPlatformIndex == -1) null else platforms[currentPlatformIndex]
             Dropdown(
                 title = stringResource(R.string.source),
                 values = sources,
@@ -124,7 +118,6 @@ fun MainScreen(
             )
             GameListItem(
                 modifier = Modifier.weight(1f),
-                games = games,
                 source = currentSource,
                 platform = currentPlatform,
                 onForChildClicked = onForChildClicked,
@@ -144,6 +137,7 @@ fun Platform(
     onEditClicked: () -> Unit,
 ) {
     Row(modifier = modifier) {
+        Log.d("MainScreen", "Set platform drop down, current=$selectedPlatform")
         Dropdown(
             title = stringResource(R.string.platform),
             values = platforms,
@@ -215,7 +209,6 @@ fun Header(
 @Composable
 fun GameListItem(
     modifier: Modifier = Modifier,
-    games: List<Game>,
     source: Source?,
     platform: Platform?,
     onForChildClicked: (path: String, Boolean) -> Unit,
@@ -223,13 +216,13 @@ fun GameListItem(
     onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     LazyColumn(modifier) {
-        games.forEach { game ->
+        platform?.gameList?.games?.forEach { game ->
             item {
                 GameItem(
                     game = game,
                     onForChildClicked = { checked -> onForChildClicked(game.path, checked) },
                     onFavoriteClicked = { checked -> onFavoriteClicked(game.path, checked) },
-                    onGameClicked = { onGameClicked(requireNotNull(source), requireNotNull(platform), game) }
+                    onGameClicked = { onGameClicked(requireNotNull(source), platform, game) }
                 )
             }
         }
@@ -296,62 +289,6 @@ fun GameItem(
     }
 }
 
-// ExposedDropdownMenuBox is experimental
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun <T> Dropdown(
-    modifier: Modifier = Modifier,
-    title: String,
-    values: List<T>,
-    selectedValue: T? = null,
-    onValueSelected: (T) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedOption: T? by remember { mutableStateOf(selectedValue) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            expanded = !expanded
-        },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            enabled = values.isNotEmpty(),
-            readOnly = true,
-            value = selectedOption?.toString() ?: "",
-            onValueChange = {},
-            label = { Text(title) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            }
-        ) {
-            values.forEach { selectionOption ->
-                DropdownMenuItem(
-                    onClick = {
-                        onValueSelected(selectionOption)
-                        selectedOption = selectionOption
-                        expanded = false
-                    },
-                ) {
-                    Text(text = selectionOption.toString())
-                }
-            }
-        }
-    }
-
-    if (values.isNotEmpty() && (selectedOption == null || !values.contains(selectedOption))) {
-        val value = values[0]
-        selectedOption = value
-        onValueSelected(value)
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun HeaderPreview() {
@@ -394,15 +331,5 @@ fun PlatformPreview() {
         selectedPlatform = null,
         onPlatformSelected = {},
         onEditClicked = {},
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DropdownPreview() {
-    Dropdown(
-        title = "Games",
-        values = listOf("Sonic", "Sonic2"),
-        onValueSelected = {}
     )
 }

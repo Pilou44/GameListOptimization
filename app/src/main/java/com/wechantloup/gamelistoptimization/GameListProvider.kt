@@ -79,8 +79,6 @@ class GameListProvider {
             .build()
         val newXml = jsonToXml.toFormattedString(2)
 
-        Log.i("TOTO", "New xml = $newXml")
-
         val outFile = share.openFile(
             path,
             EnumSet.of(AccessMask.GENERIC_WRITE),
@@ -92,6 +90,8 @@ class GameListProvider {
         outputStream.use {
             it.write(newXml.toByteArray(Charsets.UTF_8))
         }
+
+        Log.i(TAG, "Platform $platform saved")
     }
 
     suspend fun downloadGameImage(game: Game, platformPath: String, cachedImage: File): Boolean = withContext(Dispatchers.IO) {

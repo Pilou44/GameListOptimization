@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.gamelistoptimization.GameListProvider
-import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
@@ -19,6 +18,7 @@ class MainViewModelFactory(
     private val activity: Activity,
     private val provider: GameListProvider,
 ) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
         return MainViewModel(activity.application, provider) as T
@@ -33,7 +33,7 @@ class MainViewModel(
     private val _stateFlow = MutableStateFlow(State())
     val stateFlow: StateFlow<State> = _stateFlow
 
-    private val gameSources = Sources.values().map { it.source } .toList()
+    private val gameSources = Sources.values().map { it.source }.toList()
 
     init {
         _stateFlow.value = stateFlow.value.copy(sources = gameSources)
@@ -46,12 +46,24 @@ class MainViewModel(
         }
     }
 
+    fun refresh() {
+        viewModelScope.launch {
+            val source = requireNotNull(getCurrentSource())
+            if (provider.open(source)) {
+                _stateFlow.value = stateFlow.value.copy(
+                    platforms = provider.getPlatforms(),
+                )
+            }
+        }
+    }
+
     fun setSource(source: Source) {
         viewModelScope.launch {
             if (provider.open(source)) {
                 _stateFlow.value = stateFlow.value.copy(
-                    currentSource = source,
+                    currentSourceIndex = getSources().indexOf(source),
                     platforms = provider.getPlatforms(),
+                    currentPlatformIndex = -1,
                 )
             }
         }
@@ -59,8 +71,7 @@ class MainViewModel(
 
     fun setPlatform(selectedPlatform: Platform) {
         _stateFlow.value = stateFlow.value.copy(
-            currentPlatform = selectedPlatform,
-            games = selectedPlatform.gameList.getGamesCopy(),
+            currentPlatformIndex = getPlatforms().getPlatformIndex(selectedPlatform),
             hasBackup = selectedPlatform.gameListBackup != null,
         )
     }
@@ -121,24 +132,43 @@ class MainViewModel(
         provider.savePlatform(platform)
 
         val platforms = provider.getPlatforms()
-        val newPlatform = platforms.first { it.path == platform.path }
+        val platformIndex = platforms.getPlatformIndex(platform)
 
         _stateFlow.value = stateFlow.value.copy(
             platforms = platforms,
-            currentPlatform = newPlatform,
-            games = newPlatform.gameList.getGamesCopy(),
-            hasBackup = newPlatform.gameListBackup != null
+            currentPlatformIndex = platformIndex,
+            hasBackup = platform.gameListBackup != null
         )
     }
 
-    private fun getCurrentPlatform(): Platform? = stateFlow.value.currentPlatform
+    private fun List<Platform>.getPlatformIndex(platform: Platform) = indexOfFirst { it.isSameAs(platform) }
+
+    private fun getPlatforms(): List<Platform> = stateFlow.value.platforms
+    private fun getSources(): List<Source> = stateFlow.value.sources
+    private fun getCurrentPlatformIndex(): Int = stateFlow.value.currentPlatformIndex
+    private fun getCurrentSourceIndex(): Int = stateFlow.value.currentSourceIndex
+
+    private fun getCurrentSource(): Source? {
+        val index = getCurrentSourceIndex()
+
+        if (index == -1) return null
+
+        return getSources()[index]
+    }
+
+    private fun getCurrentPlatform(): Platform? {
+        val index = getCurrentPlatformIndex()
+
+        if (index == -1) return null
+
+        return getPlatforms()[index]
+    }
 
     data class State(
         val sources: List<Source> = emptyList(),
         val platforms: List<Platform> = emptyList(),
-        val games: List<Game> = emptyList(),
         val hasBackup: Boolean = false,
-        val currentSource: Source? = null,
-        val currentPlatform: Platform? = null,
+        val currentSourceIndex: Int = -1,
+        val currentPlatformIndex: Int = -1,
     )
 }
