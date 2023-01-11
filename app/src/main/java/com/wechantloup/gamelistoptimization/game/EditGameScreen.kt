@@ -36,6 +36,7 @@ fun EditGameScreen(
         editableGame = requireNotNull(state.value.game),
         image = state.value.image,
         onBackPressed = onBackPressed,
+        saveGame = viewModel::saveGame,
     )
 }
 
@@ -45,11 +46,14 @@ private fun EditGameScreen(
     editableGame: Game,
     image: String?,
     onBackPressed: () -> Unit,
+    saveGame: (Game) -> Unit,
 ) {
     var game by remember { mutableStateOf(editableGame) }
+    var modified by remember { mutableStateOf(false) }
 
     val saveAndGoBack: () -> Unit = {
-//        saveName(name) Todo
+        if (modified)
+            saveGame(game)
         onBackPressed()
     }
 
@@ -87,47 +91,47 @@ private fun EditGameScreen(
                 TextField(
                     modifier = Modifier.padding(Dimens.spacingS),
                     value = game.name ?: game.path,
-                    onValueChange = { game = game.copy(name = it) },
+                    onValueChange = {
+                        game = game.copy(name = it)
+                        modified = true
+                    },
                     label = { Text(stringResource(R.string.game_name)) },
                 )
-                Field(
+                TextField(
                     modifier = Modifier.padding(Dimens.spacingS),
-                    name = stringResource(R.string.game_developer),
                     value = game.developer ?: "",
+                    onValueChange = {
+                        game = game.copy(developer = it)
+                        modified = true
+                    },
+                    label = { Text(stringResource(R.string.game_developer)) },
                 )
-                Field(
+                TextField(
                     modifier = Modifier.padding(Dimens.spacingS),
-                    name = stringResource(R.string.game_publisher),
                     value = game.publisher ?: "",
+                    onValueChange = {
+                        game = game.copy(publisher = it)
+                        modified = true
+                    },
+                    label = { Text(stringResource(R.string.game_publisher)) },
                 )
-                Text(
+                TextField(
                     modifier = Modifier.padding(Dimens.spacingS),
-                    text = game.desc ?: "",
+                    value = game.desc ?: "",
+                    onValueChange = {
+                        game = game.copy(desc = it)
+                        modified = true
+                    },
+                    label = { Text(stringResource(R.string.game_desc)) },
                 )
             }
             GlideImage(
-                modifier = Modifier.weight(1f).padding(Dimens.spacingS),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(Dimens.spacingS),
                 model = image,
                 contentDescription = game.name,
             )
         }
-    }
-}
-
-@Composable
-private fun Field(
-    modifier: Modifier = Modifier,
-    name: String,
-    value: String,
-) {
-    Row(modifier = modifier) {
-        Text(
-            modifier = Modifier,
-            text = name,
-        )
-        Text(
-            modifier = Modifier.padding(start = Dimens.spacingXs),
-            text = value,
-        )
     }
 }

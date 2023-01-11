@@ -36,12 +36,14 @@ class GameListProvider {
                 share?.close()
             }
             currentSource = source
+            Log.i(TAG, "Connect to ${source.name}")
             share = source.connectTo()
         }
         return@withContext share != null
     }
 
     suspend fun close() = withContext(Dispatchers.IO) {
+        Log.i(TAG, "Disconnect from ${currentSource?.name}")
         currentSource = null
         share?.close()
         share = null

@@ -66,6 +66,22 @@ class GameViewModel(
         }
     }
 
+    fun saveGame(game: Game) {
+        _stateFlow.value = stateFlow.value.copy(game = game)
+
+        val currentPlatform = requireNotNull(getCurrentPlatform())
+        val mutableGameList = currentPlatform.gameList.games.toMutableList()
+        val gameIndex = mutableGameList.indexOfFirst { it.path == game.path }
+        mutableGameList.removeAt(gameIndex)
+        mutableGameList.add(gameIndex, game)
+        val gameList = currentPlatform.gameList.copy(games = mutableGameList)
+        val platform = currentPlatform.copy(gameList = gameList)
+
+        viewModelScope.launch {
+            provider.savePlatform(platform)
+        }
+    }
+
     private suspend fun Game.retrieveImage(source: Source, platform: Platform) = withContext(Dispatchers.IO) {
         if (image == null) return@withContext
 
