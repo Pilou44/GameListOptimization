@@ -97,13 +97,13 @@ fun MainScreen(
             Dropdown(
                 title = stringResource(R.string.source),
                 values = sources,
-                selectedValue = currentSource,
+                selectedIndex = currentSourceIndex,
                 onValueSelected = onSourceSelected,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Platform(
                 platforms = platforms,
-                selectedPlatform = currentPlatform,
+                selectedPlatformIndex = currentPlatformIndex,
                 onPlatformSelected = onPlatformSelected,
                 onEditClicked = onEditPlatformClicked,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -130,16 +130,16 @@ fun MainScreen(
 fun Platform(
     modifier: Modifier = Modifier,
     platforms: List<Platform>,
-    selectedPlatform: Platform?,
+    selectedPlatformIndex: Int,
     onPlatformSelected: (Platform) -> Unit,
     onEditClicked: () -> Unit,
 ) {
     Row(modifier = modifier) {
-        Log.d("MainScreen", "Set platform drop down, current=$selectedPlatform")
+        Log.d("MainScreen", "Set platform drop down")
         Dropdown(
             title = stringResource(R.string.platform),
             values = platforms,
-            selectedValue = selectedPlatform,
+            selectedIndex = selectedPlatformIndex,
             onValueSelected = onPlatformSelected,
             modifier = Modifier.align(Alignment.CenterVertically)
         )
@@ -326,7 +326,7 @@ fun PlatformPreview() {
     )
     Platform(
         platforms = listOf(pf1),
-        selectedPlatform = null,
+        selectedPlatformIndex = 0,
         onPlatformSelected = {},
         onEditClicked = {},
     )

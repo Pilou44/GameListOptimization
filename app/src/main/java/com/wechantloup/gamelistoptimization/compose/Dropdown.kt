@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.wechantloup.gamelistoptimization.main.MainViewModel
 
 // ExposedDropdownMenuBox is experimental
 @OptIn(ExperimentalMaterialApi::class)
@@ -23,20 +22,15 @@ fun <T : DropdownComparable> Dropdown(
     modifier: Modifier = Modifier,
     title: String,
     values: List<T>,
-    selectedValue: T? = null,
+    selectedIndex: Int,
     onValueSelected: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedOption: T? by remember { mutableStateOf(selectedValue) }
+    var index by remember { mutableStateOf(selectedIndex) }
 
-    /*if (selectedValue == null) {
-        selectedOption = null
-    } else*/ if (
-        selectedValue != null &&
-        selectedOption?.isSameAs(selectedValue) == true &&
-        selectedOption.toString() != selectedValue.toString()
-    ) {
-        selectedOption = selectedValue
+    if (values.isNotEmpty() && index == -1) {
+        index = 0
+        onValueSelected(values[index])
     }
 
     ExposedDropdownMenuBox(
@@ -46,10 +40,11 @@ fun <T : DropdownComparable> Dropdown(
         },
         modifier = modifier
     ) {
+        val valueName = if (index >= 0) values[index].toString() else ""
         OutlinedTextField(
             enabled = values.isNotEmpty(),
             readOnly = true,
-            value = selectedOption?.toString() ?: "",
+            value = valueName,
             onValueChange = {},
             label = { Text(title) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -64,23 +59,19 @@ fun <T : DropdownComparable> Dropdown(
             values.forEach { selectionOption ->
                 DropdownMenuItem(
                     onClick = {
+                        expanded = false
+                        
+                        if (selectionOption.isSameAs(values[index])) return@DropdownMenuItem
+
                         Log.d("TOTO", "On drop down clicked")
                         onValueSelected(selectionOption)
-                        selectedOption = selectionOption
-                        expanded = false
+                        index = values.indexOfFirst { it.isSameAs(selectionOption) }
                     },
                 ) {
                     Text(text = selectionOption.toString())
                 }
             }
         }
-    }
-
-    val selection = selectedOption
-    if (values.isNotEmpty() && (selection == null || !values.any { it.isSameAs(selection) })) {
-        val value = values[0]
-        selectedOption = value
-        onValueSelected(value)
     }
 }
 
@@ -97,6 +88,7 @@ fun DropdownPreview() {
     Dropdown(
         title = "Games",
         values = listOf(StringComparable("Sonic"), StringComparable("Sonic2")),
+        selectedIndex = 0,
         onValueSelected = {}
     )
 }
