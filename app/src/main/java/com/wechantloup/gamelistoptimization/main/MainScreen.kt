@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.main
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +35,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.GameList
 import com.wechantloup.gamelistoptimization.model.Platform

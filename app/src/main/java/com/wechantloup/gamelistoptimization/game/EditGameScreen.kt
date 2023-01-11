@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.wechantloup.gamelistoptimization.BackButton
 import com.wechantloup.gamelistoptimization.R
+import com.wechantloup.gamelistoptimization.compose.BackButton
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.theme.Dimens
 

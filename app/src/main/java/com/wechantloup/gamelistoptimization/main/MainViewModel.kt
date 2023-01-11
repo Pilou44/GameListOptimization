@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.main
 
 import android.app.Activity
 import android.app.Application
@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.wechantloup.gamelistoptimization.GameListProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source

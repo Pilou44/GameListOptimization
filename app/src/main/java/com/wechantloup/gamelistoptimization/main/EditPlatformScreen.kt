@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.main
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.wechantloup.gamelistoptimization.R
+import com.wechantloup.gamelistoptimization.compose.BackButton
 
 @Composable
 fun EditPlatformScreen(
@@ -82,23 +84,6 @@ fun EditPlatformScreen(
                 label = { Text("Label") }
             )
         }
-    }
-}
-
-@Composable
-fun BackButton(
-    modifier: Modifier = Modifier,
-    onBackPressed: () -> Unit,
-) {
-    IconButton(
-        modifier = modifier.wrapContentSize(),
-        onClick = onBackPressed
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_arrow_back_24),
-            contentDescription = "Back",
-            tint = MaterialTheme.colors.onSurface,
-        )
     }
 }
 

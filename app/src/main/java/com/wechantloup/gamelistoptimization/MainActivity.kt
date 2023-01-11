@@ -15,6 +15,10 @@ import com.wechantloup.gamelistoptimization.game.EditGameScreen
 import com.wechantloup.gamelistoptimization.game.GameScreen
 import com.wechantloup.gamelistoptimization.game.GameViewModel
 import com.wechantloup.gamelistoptimization.game.GameViewModelFactory
+import com.wechantloup.gamelistoptimization.main.EditPlatformScreen
+import com.wechantloup.gamelistoptimization.main.MainScreen
+import com.wechantloup.gamelistoptimization.main.MainViewModel
+import com.wechantloup.gamelistoptimization.main.MainViewModelFactory
 import com.wechantloup.gamelistoptimization.theme.WechantTheme
 
 class MainActivity : AppCompatActivity() {
