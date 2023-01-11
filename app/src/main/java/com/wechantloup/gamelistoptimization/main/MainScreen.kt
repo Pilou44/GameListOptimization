@@ -47,7 +47,6 @@ fun MainScreen(
         currentSourceIndex = state.value.currentSourceIndex,
         platforms = state.value.platforms,
         currentPlatformIndex = state.value.currentPlatformIndex,
-        isBackupAvailable = state.value.hasBackup,
         onSourceSelected = viewModel::setSource,
         onPlatformSelected = viewModel::setPlatform,
         onForChildClicked = viewModel::onGameSetForKids,
@@ -66,7 +65,6 @@ fun MainScreen(
     currentSourceIndex: Int,
     platforms: List<Platform>,
     currentPlatformIndex: Int,
-    isBackupAvailable: Boolean,
     onSourceSelected: (Source) -> Unit,
     onPlatformSelected: (Platform) -> Unit,
     onForChildClicked: (String, Boolean) -> Unit,
@@ -111,7 +109,7 @@ fun MainScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Header(
-                isBackupAvailable = isBackupAvailable,
+                isBackupAvailable = currentPlatform?.hasBackup() == true,
                 onCopyBackupClicked = onCopyBackupClicked,
                 onAllChildClicked = onAllChildClicked,
                 onAllFavoriteClicked = onAllFavoriteClicked

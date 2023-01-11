@@ -15,4 +15,6 @@ data class Platform(
     override fun toString(): String {
         return gameList.platform ?: gameList.provider?.system ?: path
     }
+
+    fun hasBackup() = gameListBackup != null
 }

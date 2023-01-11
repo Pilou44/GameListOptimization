@@ -1,5 +1,6 @@
 package com.wechantloup.gamelistoptimization.compose
 
+import android.util.Log
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
@@ -13,11 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.wechantloup.gamelistoptimization.main.MainViewModel
 
 // ExposedDropdownMenuBox is experimental
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun <T: DropdownComparable> Dropdown(
+fun <T : DropdownComparable> Dropdown(
     modifier: Modifier = Modifier,
     title: String,
     values: List<T>,
@@ -26,6 +28,16 @@ fun <T: DropdownComparable> Dropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOption: T? by remember { mutableStateOf(selectedValue) }
+
+    /*if (selectedValue == null) {
+        selectedOption = null
+    } else*/ if (
+        selectedValue != null &&
+        selectedOption?.isSameAs(selectedValue) == true &&
+        selectedOption.toString() != selectedValue.toString()
+    ) {
+        selectedOption = selectedValue
+    }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -52,6 +64,7 @@ fun <T: DropdownComparable> Dropdown(
             values.forEach { selectionOption ->
                 DropdownMenuItem(
                     onClick = {
+                        Log.d("TOTO", "On drop down clicked")
                         onValueSelected(selectionOption)
                         selectedOption = selectionOption
                         expanded = false
@@ -72,7 +85,10 @@ fun <T: DropdownComparable> Dropdown(
 }
 
 interface DropdownComparable {
-    fun isSameAs(other: DropdownComparable): Boolean { return this == other }
+
+    fun isSameAs(other: DropdownComparable): Boolean {
+        return this == other
+    }
 }
 
 @Preview(showBackground = true)
@@ -85,7 +101,8 @@ fun DropdownPreview() {
     )
 }
 
-private class StringComparable(val value: String): DropdownComparable {
+private class StringComparable(val value: String) : DropdownComparable {
+
     override fun toString(): String {
         return value
     }

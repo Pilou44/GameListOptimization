@@ -2,6 +2,7 @@ package com.wechantloup.gamelistoptimization.main
 
 import android.app.Activity
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -58,6 +59,7 @@ class MainViewModel(
     }
 
     fun setSource(source: Source) {
+        Log.d(TAG, "Set source ${source.name}")
         viewModelScope.launch {
             if (provider.open(source)) {
                 _stateFlow.value = stateFlow.value.copy(
@@ -72,7 +74,6 @@ class MainViewModel(
     fun setPlatform(selectedPlatform: Platform) {
         _stateFlow.value = stateFlow.value.copy(
             currentPlatformIndex = getPlatforms().getPlatformIndex(selectedPlatform),
-            hasBackup = selectedPlatform.gameListBackup != null,
         )
     }
 
@@ -137,7 +138,6 @@ class MainViewModel(
         _stateFlow.value = stateFlow.value.copy(
             platforms = platforms,
             currentPlatformIndex = platformIndex,
-            hasBackup = platform.gameListBackup != null
         )
     }
 
@@ -167,8 +167,11 @@ class MainViewModel(
     data class State(
         val sources: List<Source> = emptyList(),
         val platforms: List<Platform> = emptyList(),
-        val hasBackup: Boolean = false,
         val currentSourceIndex: Int = -1,
         val currentPlatformIndex: Int = -1,
     )
+
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
 }
