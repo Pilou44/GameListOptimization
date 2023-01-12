@@ -161,20 +161,57 @@ class GameListProvider {
         return@withContext true
     }
 
-    suspend fun uploadGame(game: Game, file: File, platformPath: String, destination: Source): Boolean = withContext(Dispatchers.IO) {
+    suspend fun uploadGame(game: Game, gameFile: File, imageFile: File?, srcPlatform: Platform, destination: Source): Boolean = withContext(Dispatchers.IO) {
+        val savedSource = currentSource
+
+        open(destination)
         val share = share ?: throw IllegalStateException("Not connected")
 
-        val path = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
-        val gamePath = "$path${game.path}"
+        val destPlatform = getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return@withContext false // ToDo Create platform
+
+        val platformPath = srcPlatform.path.substring(0, srcPlatform.path.indexOf(GAMELIST_FILE))
+
+        val gamePath = "$platformPath${game.path}"
             .replace("/", "\\")
             .replace("\\.\\", "\\")
         Log.d(TAG, "Game path = $gamePath")
-        val dest = share.openFile(
-            gamePath,
+        upload(gameFile, gamePath)
+        Log.i(TAG, "Game uploaded")
+
+        if (game.image != null && imageFile != null) {
+            val imagePath = "$platformPath${game.image}"
+                .replace("/", "\\")
+                .replace("\\.\\", "\\")
+            Log.d(TAG, "Image path = $imagePath")
+            val parentPath = imagePath.substring(0, imagePath.lastIndexOf("\\"))
+            Log.d(TAG, "Image parent path = $parentPath")
+            share.mkdir(parentPath)
+            upload(imageFile, imagePath)
+            Log.i(TAG, "Game uploaded")
+        }
+
+        val destGames = destPlatform.gameList.games.toMutableList()
+            .apply { add(game) }
+        val gameList = destPlatform.gameList.copy(games = destGames)
+        val newPlatform = destPlatform.copy(gameList = gameList)
+        savePlatform(newPlatform)
+
+        if (savedSource != null) {
+            open(savedSource)
+        } else {
+            close()
+        }
+
+        return@withContext true
+    }
+
+    private fun upload(file: File, path: String) {
+        val dest = requireNotNull(share).openFile(
+            path,
             EnumSet.of(AccessMask.GENERIC_WRITE),
             null,
             SMB2ShareAccess.ALL,
-            SMB2CreateDisposition.FILE_OVERWRITE,
+            SMB2CreateDisposition.FILE_OVERWRITE_IF,
             null,
         )
         val outputStream = dest.outputStream
@@ -185,12 +222,8 @@ class GameListProvider {
                 copy(input, output)
             }
         }
-        Log.i(TAG, "Game uploaded")
 
-        // ToDo Update gamelist
-        // ToDo Upload image
-
-        return@withContext true
+        dest.close()
     }
 
     private fun copy(source: InputStream, target: OutputStream) {

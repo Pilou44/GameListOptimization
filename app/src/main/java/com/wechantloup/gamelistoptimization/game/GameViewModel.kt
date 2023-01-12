@@ -91,10 +91,12 @@ class GameViewModel(
     }
 
     fun copyGame(destination: Source) {
-        val cacheFile: File = copyGameToCache()
-        copyCacheToDest(cacheFile, destination)
-        if (!cacheFile.delete()) {
-            cacheFile.deleteOnExit()
+        viewModelScope.launch {
+            val cacheFile: File = copyGameToCache()
+            copyGameToDest(cacheFile, destination)
+            if (!cacheFile.delete()) {
+                cacheFile.deleteOnExit()
+            }
         }
     }
 
@@ -108,13 +110,21 @@ class GameViewModel(
     }
 
     private suspend fun copyGameToDest(file: File, destination: Source) {
-        val source = requireNotNull(getCurrentSource())
         val platform = requireNotNull(getCurrentPlatform())
         val game = requireNotNull(getCurrentGame())
-        provider.open(destination)
-        val result = provider.uploadGame(game, file, platform.path)
+        val imageFile = getImageFile(
+            requireNotNull(getCurrentSource()),
+            platform,
+            game,
+        )
+        val result = provider.uploadGame(
+            game = game,
+            gameFile = file,
+            imageFile = if (imageFile.exists()) imageFile else null,
+            srcPlatform = platform,
+            destination = destination,
+        )
         Log.i(TAG, "File upload to cache success = $result")
-        provider.open(source)
     }
 
     private suspend fun Game.retrieveImage(source: Source, platform: Platform) = withContext(Dispatchers.IO) {
