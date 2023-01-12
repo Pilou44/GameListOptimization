@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.hierynomus.msdtyp.AccessMask
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
+import com.hierynomus.mssmb2.SMBApiException
 import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.connection.Connection
@@ -165,11 +166,10 @@ class GameListProvider {
         val savedSource = currentSource
 
         open(destination)
-        val share = share ?: throw IllegalStateException("Not connected")
 
         val destPlatform = getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return@withContext false // ToDo Create platform
 
-        val platformPath = srcPlatform.path.substring(0, srcPlatform.path.indexOf(GAMELIST_FILE))
+        val platformPath = destPlatform.path.substring(0, destPlatform.path.indexOf(GAMELIST_FILE))
 
         val gamePath = "$platformPath${game.path}"
             .replace("/", "\\")
@@ -183,9 +183,6 @@ class GameListProvider {
                 .replace("/", "\\")
                 .replace("\\.\\", "\\")
             Log.d(TAG, "Image path = $imagePath")
-            val parentPath = imagePath.substring(0, imagePath.lastIndexOf("\\"))
-            Log.d(TAG, "Image parent path = $parentPath")
-            share.mkdir(parentPath)
             upload(imageFile, imagePath)
             Log.i(TAG, "Game uploaded")
         }
@@ -206,7 +203,12 @@ class GameListProvider {
     }
 
     private fun upload(file: File, path: String) {
-        val dest = requireNotNull(share).openFile(
+        val share = requireNotNull(share)
+        val parentPath = path.substring(0, path.lastIndexOf("\\"))
+        Log.d(TAG, "Parent path = $parentPath")
+        share.mkdirs(parentPath)
+
+        val dest = share.openFile(
             path,
             EnumSet.of(AccessMask.GENERIC_WRITE),
             null,
@@ -224,6 +226,32 @@ class GameListProvider {
         }
 
         dest.close()
+    }
+
+    private fun DiskShare.mkdirs(path: String) {
+        var index = path.indexOf("\\")
+        var rest = path
+        var first = ""
+        while (index > 0) {
+            first += rest.substring(0, index)
+            rest = rest.substring(index + 1)
+            Log.d(TAG, "mkdir($first)")
+            createDir(first)
+            first += "\\"
+            index = rest.indexOf("\\")
+        }
+        Log.d(TAG, "mkdir($path)")
+        createDir(path)
+    }
+
+    private fun DiskShare.createDir(path: String) = try {
+        mkdir(path)
+    } catch (e: SMBApiException) {
+        if (e.statusCode == 0xc0000035) {
+            Log.d(TAG, "$path already exists")
+        } else {
+            throw e
+        }
     }
 
     private fun copy(source: InputStream, target: OutputStream) {
