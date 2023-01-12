@@ -85,7 +85,8 @@ class GameListProvider {
             null,
             SMB2ShareAccess.ALL,
             SMB2CreateDisposition.FILE_OVERWRITE,
-            null)
+            null,
+        )
         val outputStream = outFile.outputStream
         outputStream.use {
             it.write(newXml.toByteArray(Charsets.UTF_8))
@@ -124,6 +125,70 @@ class GameListProvider {
                 copy(input, output)
             }
         }
+
+        return@withContext true
+    }
+
+    suspend fun downloadGame(game: Game, platformPath: String, cacheFile: File): Boolean = withContext(Dispatchers.IO) {
+        val share = share ?: throw IllegalStateException("Not connected")
+
+        val path = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
+        val gamePath = "$path${game.path}"
+            .replace("/", "\\")
+            .replace("\\.\\", "\\")
+        Log.d(TAG, "Game path = $gamePath")
+        val src = share.openFile(
+            gamePath,
+            EnumSet.of(AccessMask.GENERIC_READ),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OPEN,
+            null
+        )
+        val inputStream = src.inputStream
+
+        if (!cacheFile.exists()) {
+            cacheFile.createNewFile()
+        }
+        val outputStream = cacheFile.outputStream()
+
+        outputStream.use { output ->
+            inputStream.use { input ->
+                copy(input, output)
+            }
+        }
+
+        return@withContext true
+    }
+
+    suspend fun uploadGame(game: Game, file: File, platformPath: String, destination: Source): Boolean = withContext(Dispatchers.IO) {
+        val share = share ?: throw IllegalStateException("Not connected")
+
+        val path = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
+        val gamePath = "$path${game.path}"
+            .replace("/", "\\")
+            .replace("\\.\\", "\\")
+        Log.d(TAG, "Game path = $gamePath")
+        val dest = share.openFile(
+            gamePath,
+            EnumSet.of(AccessMask.GENERIC_WRITE),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OVERWRITE,
+            null,
+        )
+        val outputStream = dest.outputStream
+        val inputStream = file.inputStream()
+
+        outputStream.use { output ->
+            inputStream.use { input ->
+                copy(input, output)
+            }
+        }
+        Log.i(TAG, "Game uploaded")
+
+        // ToDo Update gamelist
+        // ToDo Upload image
 
         return@withContext true
     }

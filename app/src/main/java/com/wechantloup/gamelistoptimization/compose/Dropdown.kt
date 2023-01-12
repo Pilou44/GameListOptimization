@@ -22,7 +22,7 @@ fun <T : DropdownComparable> Dropdown(
     modifier: Modifier = Modifier,
     title: String,
     values: List<T>,
-    selectedIndex: Int,
+    selectedIndex: Int = -1,
     onValueSelected: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -60,7 +60,7 @@ fun <T : DropdownComparable> Dropdown(
                 DropdownMenuItem(
                     onClick = {
                         expanded = false
-                        
+
                         if (selectionOption.isSameAs(values[index])) return@DropdownMenuItem
 
                         Log.d("TOTO", "On drop down clicked")

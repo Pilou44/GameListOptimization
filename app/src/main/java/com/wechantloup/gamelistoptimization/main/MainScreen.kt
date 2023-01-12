@@ -331,3 +331,40 @@ fun PlatformPreview() {
         onEditClicked = {},
     )
 }
+
+@Preview(showBackground = true)
+@Composable
+fun MainScreenPreview() {
+    val source = Source(
+        name = "Source",
+        ip = "",
+        path = "",
+        login = "",
+        password = "",
+    )
+    val gameList = GameList(
+        platform = "Megadrive",
+        provider = null,
+        games = emptyList(),
+    )
+    val pf1 = Platform(
+        gameList = gameList,
+        gameListBackup = null,
+        path = "",
+    )
+    MainScreen(
+        sources = listOf(source),
+        currentSourceIndex = 0,
+        platforms = listOf(pf1),
+        currentPlatformIndex = 0,
+        onSourceSelected = {},
+        onPlatformSelected = {},
+        onForChildClicked = { _, _ -> },
+        onFavoriteClicked = { _, _ -> },
+        onCopyBackupClicked = {},
+        onAllChildClicked = {},
+        onAllFavoriteClicked = {},
+        onEditPlatformClicked = {},
+        onGameClicked = { _, _, _ -> },
+    )
+}

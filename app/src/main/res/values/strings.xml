@@ -11,7 +11,7 @@
     <!-- Platform name edition -->
     <string name="edit_platform_name_label">Platform name</string>
 
-    <!-- Game edition -->
+    <!-- Game -->
     <string name="game_name">Name:</string>
     <string name="game_developer">Developer:</string>
     <string name="game_desc">Description:</string>
@@ -20,4 +20,6 @@
     <string name="game_publisher">Publisher:</string>
     <string name="game_rating">Rating:</string>
     <string name="game_release_date">Release date:</string>
+    <string name="copy_to">Copy to</string>
+    <string name="btn_copy">Copy!</string>
 </resources>

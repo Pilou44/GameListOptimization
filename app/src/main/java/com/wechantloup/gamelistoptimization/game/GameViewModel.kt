@@ -12,6 +12,7 @@ import com.wechantloup.gamelistoptimization.GameListProvider.Companion.GAMELIST_
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
+import com.wechantloup.gamelistoptimization.model.Sources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ class GameViewModelFactory(
     private val activity: Activity,
     private val provider: GameListProvider,
 ) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
         return GameViewModel(activity.application, provider) as T
@@ -37,6 +39,8 @@ class GameViewModel(
 
     private val _stateFlow = MutableStateFlow(State())
     val stateFlow: StateFlow<State> = _stateFlow
+
+    private val gameSources = Sources.values().map { it.source }.toList()
 
     override fun onCleared() {
         viewModelScope.launch {
@@ -56,11 +60,15 @@ class GameViewModel(
 
         if (isSameSource && isSamePlatform && isSameGame) return
 
-        Log.d(TAG, "Clear data: isSameSource='$isSameSource', isSamePlatform='$isSamePlatform', isSameGame='$isSameGame'")
+        Log.d(TAG,
+            "Clear data: isSameSource='$isSameSource', isSamePlatform='$isSamePlatform', isSameGame='$isSameGame'")
         _stateFlow.value = stateFlow.value.copy(source = null, platform = null, game = null, image = null)
 
         Log.d(TAG, "Open game")
-        _stateFlow.value = stateFlow.value.copy(source = source, platform = platform, game = game)
+        _stateFlow.value = stateFlow.value.copy(source = source,
+            platform = platform,
+            game = game,
+            copyDestinations = gameSources - source)
         viewModelScope.launch {
             game.retrieveImage(source, platform)
         }
@@ -82,10 +90,37 @@ class GameViewModel(
         }
     }
 
+    fun copyGame(destination: Source) {
+        val cacheFile: File = copyGameToCache()
+        copyCacheToDest(cacheFile, destination)
+        if (!cacheFile.delete()) {
+            cacheFile.deleteOnExit()
+        }
+    }
+
+    private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {
+        val game = requireNotNull(getCurrentGame())
+        val platform = requireNotNull(getCurrentPlatform())
+        val cacheFile = getGameFile(game)
+        val result = provider.downloadGame(game, platform.path, cacheFile)
+        Log.i(TAG, "File downloaded to cache success = $result")
+        return@withContext cacheFile
+    }
+
+    private suspend fun copyGameToDest(file: File, destination: Source) {
+        val source = requireNotNull(getCurrentSource())
+        val platform = requireNotNull(getCurrentPlatform())
+        val game = requireNotNull(getCurrentGame())
+        provider.open(destination)
+        val result = provider.uploadGame(game, file, platform.path)
+        Log.i(TAG, "File upload to cache success = $result")
+        provider.open(source)
+    }
+
     private suspend fun Game.retrieveImage(source: Source, platform: Platform) = withContext(Dispatchers.IO) {
         if (image == null) return@withContext
 
-        val cachedImage: File = getFile(source, platform, this@retrieveImage)
+        val cachedImage: File = getImageFile(source, platform, this@retrieveImage)
         if (cachedImage.exists()) {
             _stateFlow.value = stateFlow.value.copy(image = cachedImage.path)
             return@withContext
@@ -96,13 +131,27 @@ class GameViewModel(
         }
     }
 
-    private fun getFile(source: Source, platform: Platform, game: Game): File {
+    private fun getImageFile(source: Source, platform: Platform, game: Game): File {
         val platformPath = platform.path.substring(0, platform.path.indexOf(GAMELIST_FILE))
         val name = URLEncoder
             .encode("${source.ip}${source.path}$platformPath${game.path}", Charsets.UTF_8.name())
             .replace("/", "")
             .replace("\\", "")
         val parent = File(getApplication<Application>().cacheDir, "images")
+        if (!parent.exists()) parent.mkdirs()
+        return File(parent, name)
+    }
+
+    private fun getGameFile(game: Game): File {
+        val gamePath = game.path
+        val name = if (gamePath.contains("/")) {
+            gamePath.substring(gamePath.lastIndexOf("/") + 1)
+        } else if (gamePath.contains("\\")) {
+            gamePath.substring(gamePath.lastIndexOf("\\") + 1)
+        } else {
+            gamePath
+        }
+        val parent = File(getApplication<Application>().cacheDir, "games")
         if (!parent.exists()) parent.mkdirs()
         return File(parent, name)
     }
@@ -116,9 +165,11 @@ class GameViewModel(
         val platform: Platform? = null,
         val game: Game? = null,
         val image: String? = null,
+        val copyDestinations: List<Source> = emptyList(),
     )
 
     companion object {
+
         private const val TAG = "GameViewModel"
     }
 }
