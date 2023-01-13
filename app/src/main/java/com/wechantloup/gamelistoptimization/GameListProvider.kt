@@ -97,72 +97,22 @@ class GameListProvider {
         Log.i(TAG, "Platform $platform saved")
     }
 
-    suspend fun downloadGameImage(game: Game, platformPath: String, cachedImage: File): Boolean = withContext(Dispatchers.IO) {
-        val share = share ?: throw IllegalStateException("Not connected")
-
+    suspend fun downloadGameImage(game: Game, platform: Platform, destFile: File): Boolean = withContext(Dispatchers.IO) {
         if (game.image == null) return@withContext false
 
-        val path = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
-        val imagePath = "$path${game.image}"
-            .replace("/", "\\")
-            .replace("\\.\\", "\\")
+        val imagePath = game.getImagePath(platform)
         Log.d(TAG, "Image path = $imagePath")
-        val src = share.openFile(
-            imagePath,
-            EnumSet.of(AccessMask.GENERIC_READ),
-            null,
-            SMB2ShareAccess.ALL,
-            SMB2CreateDisposition.FILE_OPEN,
-            null
-        )
-        val inputStream = src.inputStream
 
-        if (!cachedImage.exists()) {
-            cachedImage.createNewFile()
-        }
-        val outputStream = cachedImage.outputStream()
-
-        outputStream.use { output ->
-            inputStream.use { input ->
-                copy(input, output)
-            }
-        }
-
-        src.close()
+        download(imagePath, destFile)
 
         return@withContext true
     }
 
-    suspend fun downloadGame(game: Game, platformPath: String, cacheFile: File): Boolean = withContext(Dispatchers.IO) {
-        val share = share ?: throw IllegalStateException("Not connected")
-
-        val path = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
-        val gamePath = "$path${game.path}"
-            .replace("/", "\\")
-            .replace("\\.\\", "\\")
+    suspend fun downloadGame(game: Game, platform: Platform, destFile: File): Boolean = withContext(Dispatchers.IO) {
+        val gamePath = game.getPath(platform)
         Log.d(TAG, "Game path = $gamePath")
-        val src = share.openFile(
-            gamePath,
-            EnumSet.of(AccessMask.GENERIC_READ),
-            null,
-            SMB2ShareAccess.ALL,
-            SMB2CreateDisposition.FILE_OPEN,
-            null
-        )
-        val inputStream = src.inputStream
 
-        if (!cacheFile.exists()) {
-            cacheFile.createNewFile()
-        }
-        val outputStream = cacheFile.outputStream()
-
-        outputStream.use { output ->
-            inputStream.use { input ->
-                copy(input, output)
-            }
-        }
-
-        src.close()
+        download(gamePath, destFile)
 
         return@withContext true
     }
@@ -174,22 +124,16 @@ class GameListProvider {
 
         val destPlatform = getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return@withContext false // ToDo Create platform
 
-        val platformPath = destPlatform.path.substring(0, destPlatform.path.indexOf(GAMELIST_FILE))
-
-        val gamePath = "$platformPath${game.path}"
-            .replace("/", "\\")
-            .replace("\\.\\", "\\")
+        val gamePath = game.getPath(destPlatform)
         Log.d(TAG, "Game path = $gamePath")
         upload(gameFile, gamePath)
         Log.i(TAG, "Game uploaded")
 
         if (game.image != null && imageFile != null) {
-            val imagePath = "$platformPath${game.image}"
-                .replace("/", "\\")
-                .replace("\\.\\", "\\")
+            val imagePath = game.getImagePath(destPlatform)
             Log.d(TAG, "Image path = $imagePath")
             upload(imageFile, imagePath)
-            Log.i(TAG, "Game uploaded")
+            Log.i(TAG, "Image uploaded")
         }
 
         val destGames = destPlatform.gameList.games.toMutableList()
@@ -207,8 +151,23 @@ class GameListProvider {
         return@withContext true
     }
 
+    private fun Game.getImagePath(platform: Platform): String {
+        val platformPath = platform.path
+        val platfomrParentPath = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
+        return "$platfomrParentPath$image".cleanPath()
+    }
+
+    private fun Game.getPath(platform: Platform): String {
+        val platformPath = platform.path
+        val platfomrParentPath = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
+        return "$platfomrParentPath$path".cleanPath()
+    }
+
+    private fun String.cleanPath(): String = replace("/", "\\").replace("\\.\\", "\\")
+
     private fun upload(file: File, path: String) {
         val share = requireNotNull(share)
+
         val parentPath = path.substring(0, path.lastIndexOf("\\"))
         Log.d(TAG, "Parent path = $parentPath")
         share.mkdirs(parentPath)
@@ -231,6 +190,32 @@ class GameListProvider {
         }
 
         dest.close()
+    }
+
+    private fun download(path: String, file: File) {
+        val share = requireNotNull(share)
+        val src = share.openFile(
+            path,
+            EnumSet.of(AccessMask.GENERIC_READ),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OPEN,
+            null
+        )
+        val inputStream = src.inputStream
+
+        if (!file.exists()) {
+            file.createNewFile()
+        }
+        val outputStream = file.outputStream()
+
+        outputStream.use { output ->
+            inputStream.use { input ->
+                copy(input, output)
+            }
+        }
+
+        src.close()
     }
 
     private fun DiskShare.mkdirs(path: String) {

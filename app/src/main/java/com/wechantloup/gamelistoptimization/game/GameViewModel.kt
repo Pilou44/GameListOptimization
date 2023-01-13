@@ -104,7 +104,7 @@ class GameViewModel(
         val game = requireNotNull(getCurrentGame())
         val platform = requireNotNull(getCurrentPlatform())
         val cacheFile = getGameFile(game)
-        val result = provider.downloadGame(game, platform.path, cacheFile)
+        val result = provider.downloadGame(game, platform, cacheFile)
         Log.i(TAG, "File downloaded to cache success = $result")
         return@withContext cacheFile
     }
@@ -136,7 +136,7 @@ class GameViewModel(
             return@withContext
         }
 
-        if (provider.downloadGameImage(this@retrieveImage, platform.path, cachedImage)) {
+        if (provider.downloadGameImage(this@retrieveImage, platform, cachedImage)) {
             _stateFlow.value = stateFlow.value.copy(image = cachedImage.path)
         }
     }
