@@ -77,8 +77,10 @@ class GameViewModel(
         viewModelScope.launch {
             val gameCrc = provider.getGameCrc(game, platform)
             val gameSize = provider.getGameSize(game, platform)
-            val platformName = platform.path.substring(platform.path.lastIndexOf("/"))
+            Log.d(TAG, "path=${platform.path}")
+            val platformName = platform.path.substring(0, platform.path.lastIndexOf("\\"))
             val systemId = Scraper().getSystemId(platformName)
+            Log.d(TAG, "Game: ${game.name} crc=$gameCrc size=$gameSize systemId=$systemId")
         }
     }
 
