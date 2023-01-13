@@ -13,6 +13,7 @@ import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
+import com.wechantloup.gamelistoptimization.scraper.Scraper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +72,13 @@ class GameViewModel(
             copyDestinations = gameSources - source)
         viewModelScope.launch {
             game.retrieveImage(source, platform)
+        }
+
+        viewModelScope.launch {
+            val gameCrc = provider.getGameCrc(game, platform)
+            val gameSize = provider.getGameSize(game, platform)
+            val platformName = platform.path.substring(platform.path.lastIndexOf("/"))
+            val systemId = Scraper().getSystemId(platformName)
         }
     }
 

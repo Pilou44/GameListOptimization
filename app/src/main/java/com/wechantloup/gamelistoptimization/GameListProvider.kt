@@ -24,6 +24,8 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.EnumSet
+import java.util.zip.CRC32
+import java.util.zip.CheckedInputStream
 
 class GameListProvider {
 
@@ -95,6 +97,32 @@ class GameListProvider {
         outFile.close()
 
         Log.i(TAG, "Platform $platform saved")
+    }
+
+    suspend fun getGameSize(game: Game, platform: Platform): Long = withContext(Dispatchers.IO) {
+        val gamePath = game.getPath(platform)
+        val info = requireNotNull(share).getFileInformation(gamePath)
+        return@withContext info.standardInformation.endOfFile
+    }
+
+    suspend fun getGameCrc(game: Game, platform: Platform): Long = withContext(Dispatchers.IO) {
+        val gamePath = game.getPath(platform)
+        val file = requireNotNull(share).openFile(
+            gamePath,
+            EnumSet.of(AccessMask.GENERIC_READ),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OPEN,
+            null,
+        )
+        val crc = CRC32()
+        CheckedInputStream(file.inputStream, crc).use { cis ->
+            var read = cis.read()
+            while (read != -1) {
+                read = cis.read()
+            }
+        }
+        return@withContext crc.value
     }
 
     suspend fun downloadGameImage(game: Game, platform: Platform, destFile: File): Boolean = withContext(Dispatchers.IO) {
