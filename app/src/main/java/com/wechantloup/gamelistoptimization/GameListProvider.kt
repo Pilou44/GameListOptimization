@@ -92,6 +92,7 @@ class GameListProvider {
         outputStream.use {
             it.write(newXml.toByteArray(Charsets.UTF_8))
         }
+        outFile.close()
 
         Log.i(TAG, "Platform $platform saved")
     }
@@ -127,6 +128,8 @@ class GameListProvider {
             }
         }
 
+        src.close()
+
         return@withContext true
     }
 
@@ -158,6 +161,8 @@ class GameListProvider {
                 copy(input, output)
             }
         }
+
+        src.close()
 
         return@withContext true
     }
