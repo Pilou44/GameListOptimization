@@ -11,13 +11,13 @@ class SystemListResponse(
 
     class System(
         @SerializedName("id") val id: Int,
-        @SerializedName("noms") val names: Names,
-        @SerializedName("extensions") val extensions: String,
+        @SerializedName("noms") val names: Names?,
+        @SerializedName("extensions") val extensions: String?,
     )
 
     class Names(
-        @SerializedName("nom_eu") val euName: String,
-        @SerializedName("nom_us") val usName: String,
-        @SerializedName("nom_retropie") val retropieName: String,
+        @SerializedName("nom_eu") val euName: String?,
+        @SerializedName("nom_us") val usName: String?,
+        @SerializedName("nom_retropie") val retropieName: String?,
     )
 }

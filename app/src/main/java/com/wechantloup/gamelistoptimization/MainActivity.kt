@@ -19,6 +19,8 @@ import com.wechantloup.gamelistoptimization.main.EditPlatformScreen
 import com.wechantloup.gamelistoptimization.main.MainScreen
 import com.wechantloup.gamelistoptimization.main.MainViewModel
 import com.wechantloup.gamelistoptimization.main.MainViewModelFactory
+import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
+import com.wechantloup.gamelistoptimization.scraper.Scraper
 import com.wechantloup.gamelistoptimization.theme.WechantTheme
 
 class MainActivity : AppCompatActivity() {
@@ -31,13 +33,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val provider = GameListProvider()
+    private val scraper = Scraper()
 
     private val mainViewModel by viewModels<MainViewModel> {
         MainViewModelFactory(this, provider)
     }
 
     private val gameViewModel by viewModels<GameViewModel> {
-        GameViewModelFactory(this, provider)
+        GameViewModelFactory(this, provider, scraper)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization
+package com.wechantloup.gamelistoptimization.sambaprovider
 
 import android.util.Log
 import com.google.gson.Gson
@@ -59,7 +59,7 @@ class GameListProvider {
         for (file in share.listClean("", "*")) {
             val folderName = file.fileName
             if (share.isFolder("", folderName)) {
-                val filePath = "$folderName\\${GAMELIST_FILE}"
+                val filePath = "$folderName\\$GAMELIST_FILE"
                 share.extractGameList(folderName, GAMELIST_FILE)?.let { it ->
                     val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
                     platforms.add(Platform(it, gameListBackup, filePath))

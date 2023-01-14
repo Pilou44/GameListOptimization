@@ -7,8 +7,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.wechantloup.gamelistoptimization.GameListProvider
-import com.wechantloup.gamelistoptimization.GameListProvider.Companion.GAMELIST_FILE
+import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
+import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider.Companion.GAMELIST_FILE
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
@@ -25,17 +25,19 @@ import java.net.URLEncoder
 class GameViewModelFactory(
     private val activity: Activity,
     private val provider: GameListProvider,
+    private val scraper: Scraper,
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return GameViewModel(activity.application, provider) as T
+        return GameViewModel(activity.application, provider, scraper) as T
     }
 }
 
 class GameViewModel(
     application: Application,
     private val provider: GameListProvider,
+    private val scraper: Scraper,
 ) : AndroidViewModel(application) {
 
     private val _stateFlow = MutableStateFlow(State())
@@ -75,12 +77,18 @@ class GameViewModel(
         }
 
         viewModelScope.launch {
-            val gameCrc = provider.getGameCrc(game, platform)
-            val gameSize = provider.getGameSize(game, platform)
-            Log.d(TAG, "path=${platform.path}")
-            val platformName = platform.path.substring(0, platform.path.lastIndexOf("\\"))
-            val systemId = Scraper().getSystemId(platformName)
-            Log.d(TAG, "Game: ${game.name} crc=$gameCrc size=$gameSize systemId=$systemId")
+//            val gameCrc = provider.getGameCrc(game, platform)
+//            val gameSize = provider.getGameSize(game, platform)
+//            Log.d(TAG, "path=${platform.path}")
+//            val platformName = platform.path.substring(0, platform.path.lastIndexOf("\\"))
+//            val systemId = Scraper().getSystemId(platformName)
+//            Log.d(TAG, "Game: ${game.name} crc=$gameCrc size=$gameSize systemId=$systemId, name=${game.getRomName()}")
+            scraper.scrapGame(
+                romName = game.getRomName(),
+                system = platform.path.substring(0, platform.path.lastIndexOf("\\")),
+                fileSize = provider.getGameSize(game, platform),
+                crc = provider.getGameCrc(game, platform),
+            )
         }
     }
 
@@ -109,6 +117,8 @@ class GameViewModel(
             }
         }
     }
+
+    private fun Game.getRomName() = path.substring(path.lastIndexOf("/") + 1)
 
     private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {
         val game = requireNotNull(getCurrentGame())
