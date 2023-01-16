@@ -137,9 +137,13 @@ class GameListProvider {
             val imagePath = game.getImagePath(platform)
             Log.d(TAG, "Image path = $imagePath")
 
-            download(imagePath, destFile)
-
-            return@withContext true
+            try {
+                download(imagePath, destFile)
+                return@withContext true
+            } catch (e: Exception) {
+                Log.w(TAG, "Can't open $imagePath")
+                return@withContext false
+            }
         }
 
     suspend fun downloadGame(game: Game, platform: Platform, destFile: File): Boolean =

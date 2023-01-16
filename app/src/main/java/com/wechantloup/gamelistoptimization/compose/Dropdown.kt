@@ -1,6 +1,5 @@
 package com.wechantloup.gamelistoptimization.compose
 
-import android.util.Log
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
@@ -26,11 +25,9 @@ fun <T : DropdownComparable> Dropdown(
     onValueSelected: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var index by remember { mutableStateOf(selectedIndex) }
 
-    if (values.isNotEmpty() && index == -1) {
-        index = 0
-        onValueSelected(values[index])
+    if (values.isNotEmpty() && selectedIndex == -1) {
+        onValueSelected(values[0])
     }
 
     ExposedDropdownMenuBox(
@@ -40,7 +37,7 @@ fun <T : DropdownComparable> Dropdown(
         },
         modifier = modifier
     ) {
-        val valueName = if (index >= 0) values[index].toString() else ""
+        val valueName = if (selectedIndex >= 0) values[selectedIndex].toString() else ""
         OutlinedTextField(
             enabled = values.isNotEmpty(),
             readOnly = true,
@@ -61,11 +58,9 @@ fun <T : DropdownComparable> Dropdown(
                     onClick = {
                         expanded = false
 
-                        if (selectionOption.isSameAs(values[index])) return@DropdownMenuItem
+                        if (selectedIndex > 0 && selectionOption.isSameAs(values[selectedIndex])) return@DropdownMenuItem
 
-                        Log.d("TOTO", "On drop down clicked")
                         onValueSelected(selectionOption)
-                        index = values.indexOfFirst { it.isSameAs(selectionOption) }
                     },
                 ) {
                     Text(text = selectionOption.toString())

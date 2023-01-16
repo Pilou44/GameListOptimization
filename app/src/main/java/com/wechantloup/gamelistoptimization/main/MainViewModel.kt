@@ -60,10 +60,14 @@ class MainViewModel(
 
     fun setSource(source: Source) {
         Log.d(TAG, "Set source ${source.name}")
+        _stateFlow.value = stateFlow.value.copy(
+            currentSourceIndex = getSources().indexOf(source),
+            platforms = emptyList(),
+            currentPlatformIndex = -1,
+        )
         viewModelScope.launch {
             if (provider.open(source)) {
                 _stateFlow.value = stateFlow.value.copy(
-                    currentSourceIndex = getSources().indexOf(source),
                     platforms = provider.getPlatforms(),
                     currentPlatformIndex = -1,
                 )
