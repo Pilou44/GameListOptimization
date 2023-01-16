@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -34,9 +35,11 @@ fun EditGameScreen(
     val state = viewModel.stateFlow.collectAsState()
     EditGameScreen(
         editableGame = requireNotNull(state.value.game),
+        scrapedGame = state.value.scrapedGame,
         image = state.value.image,
         onBackPressed = onBackPressed,
         saveGame = viewModel::saveGame,
+        scrapGame = viewModel::scrapGame,
     )
 }
 
@@ -44,12 +47,21 @@ fun EditGameScreen(
 @Composable
 private fun EditGameScreen(
     editableGame: Game,
+    scrapedGame: Game?,
     image: String?,
     onBackPressed: () -> Unit,
     saveGame: (Game) -> Unit,
+    scrapGame: () -> Unit,
 ) {
     var game by remember { mutableStateOf(editableGame) }
+    var savedScrapedGame by remember { mutableStateOf(scrapedGame) }
     var modified by remember { mutableStateOf(false) }
+
+    if (scrapedGame != savedScrapedGame && scrapedGame != null) {
+        savedScrapedGame = scrapedGame
+        game = scrapedGame
+        modified = true
+    }
 
     val saveAndGoBack: () -> Unit = {
         if (modified)
@@ -74,6 +86,11 @@ private fun EditGameScreen(
                 },
                 backgroundColor = MaterialTheme.colors.surface,
                 navigationIcon = { BackButton(onBackPressed = saveAndGoBack) },
+                actions = {
+                    Button(onClick = { scrapGame() }) {
+                        Text(text = "Scrap")
+                    }
+                },
             )
         }
     ) { paddingValues ->

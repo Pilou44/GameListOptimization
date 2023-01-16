@@ -42,6 +42,6 @@ class RegionString(
 )
 
 class LanguageString(
-    @SerializedName("langue") val region: String,
+    @SerializedName("langue") val language: String,
     @SerializedName("text") val text: String,
 )

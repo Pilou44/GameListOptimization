@@ -75,21 +75,6 @@ class GameViewModel(
         viewModelScope.launch {
             game.retrieveImage(source, platform)
         }
-
-        viewModelScope.launch {
-//            val gameCrc = provider.getGameCrc(game, platform)
-//            val gameSize = provider.getGameSize(game, platform)
-//            Log.d(TAG, "path=${platform.path}")
-//            val platformName = platform.path.substring(0, platform.path.lastIndexOf("\\"))
-//            val systemId = Scraper().getSystemId(platformName)
-//            Log.d(TAG, "Game: ${game.name} crc=$gameCrc size=$gameSize systemId=$systemId, name=${game.getRomName()}")
-            scraper.scrapGame(
-                romName = game.getRomName(),
-                system = platform.path.substring(0, platform.path.lastIndexOf("\\")),
-                fileSize = provider.getGameSize(game, platform),
-                crc = provider.getGameCrc(game, platform),
-            )
-        }
     }
 
     fun saveGame(game: Game) {
@@ -114,6 +99,41 @@ class GameViewModel(
             if (!cacheFile.delete()) {
                 cacheFile.deleteOnExit()
             }
+        }
+    }
+
+    fun scrapGame() {
+        viewModelScope.launch {
+            val game = requireNotNull(getCurrentGame())
+            val platform = requireNotNull(getCurrentPlatform())
+            val scrapedGame = scraper.scrapGame(
+                romName = game.getRomName(),
+                system = platform.system,
+                fileSize = provider.getGameSize(game, platform),
+                crc = provider.getGameCrc(game, platform),
+            )
+            val newGame = Game(
+                id = scrapedGame.id ?: game.id,
+                source = scrapedGame.source ?: game.source,
+                path = game.path,
+                name = scrapedGame.name ?: game.name,
+                desc = scrapedGame.desc ?: game.desc,
+                rating = scrapedGame.rating ?: game.rating,
+                releasedate = scrapedGame.releasedate ?: game.releasedate,
+                developer = scrapedGame.developer ?: game.developer,
+                publisher = scrapedGame.publisher ?: game.publisher,
+                genre = scrapedGame.genre ?: game.genre,
+                players = scrapedGame.players ?: game.players,
+                image = scrapedGame.image ?: game.image,
+                marquee = scrapedGame.marquee ?: game.marquee,
+                video = scrapedGame.video ?: game.video,
+                genreid = scrapedGame.genreid ?: game.genreid,
+                favorite = game.favorite,
+                kidgame = game.kidgame,
+                hidden = game.hidden,
+            )
+            Log.i(TAG, "Set new scraper info for ${newGame.name}")
+            _stateFlow.value = stateFlow.value.copy(scrapedGame = newGame)
         }
     }
 
@@ -193,6 +213,7 @@ class GameViewModel(
         val source: Source? = null,
         val platform: Platform? = null,
         val game: Game? = null,
+        val scrapedGame: Game? = null,
         val image: String? = null,
         val copyDestinations: List<Source> = emptyList(),
     )
