@@ -52,7 +52,7 @@ class GameListProvider {
 
     suspend fun getPlatforms(): List<Platform> = withContext(Dispatchers.IO) {
         val platforms = mutableListOf<Platform>()
-        val share = share ?: throw IllegalStateException("Not connected")
+        val share = getShare()
 
         for (file in share.listClean("", "*")) {
             val folderName = file.fileName
@@ -76,7 +76,6 @@ class GameListProvider {
     }
 
     suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
-        val share = share ?: throw IllegalStateException("Not connected")
         val holder = platform.toGameListHolder()
         val path = platform.path
         val newJson = gson.toJson(holder)
@@ -88,7 +87,7 @@ class GameListProvider {
             .build()
         val newXml = jsonToXml.toFormattedString(2)
 
-        val outFile = share.openFile(
+        val outFile = getShare().openFile(
             path,
             EnumSet.of(AccessMask.GENERIC_WRITE),
             null,
@@ -107,13 +106,13 @@ class GameListProvider {
 
     suspend fun getGameSize(game: Game, platform: Platform): Long = withContext(Dispatchers.IO) {
         val gamePath = game.getPath(platform)
-        val info = requireNotNull(share).getFileInformation(gamePath)
+        val info = getShare().getFileInformation(gamePath)
         return@withContext info.standardInformation.endOfFile
     }
 
     suspend fun getGameCrc(game: Game, platform: Platform): Long = withContext(Dispatchers.IO) {
         val gamePath = game.getPath(platform)
-        val file = requireNotNull(share).openFile(
+        val file = getShare().openFile(
             gamePath,
             EnumSet.of(AccessMask.GENERIC_READ),
             null,
@@ -193,6 +192,17 @@ class GameListProvider {
         return@withContext true
     }
 
+    private suspend fun getShare(): DiskShare {
+        val diskShare = share ?: throw IllegalStateException("Not connected")
+        val source = currentSource ?: throw IllegalStateException("No source defined")
+
+        if (diskShare.isConnected) return diskShare
+
+        share = source.connectTo()
+
+        return requireNotNull(share) { "Unable to reconnect" }
+    }
+
     private fun Game.getImagePath(platform: Platform): String {
         return "${platform.system}\\$image".cleanPath()
     }
@@ -203,8 +213,8 @@ class GameListProvider {
 
     private fun String.cleanPath(): String = replace("/", "\\").replace("\\.\\", "\\")
 
-    private fun upload(file: File, path: String) {
-        val share = requireNotNull(share)
+    private suspend fun upload(file: File, path: String) = withContext(Dispatchers.IO) {
+        val share = getShare()
 
         val parentPath = path.substring(0, path.lastIndexOf("\\"))
         Log.d(TAG, "Parent path = $parentPath")
@@ -230,9 +240,8 @@ class GameListProvider {
         dest.close()
     }
 
-    private fun download(path: String, file: File) {
-        val share = requireNotNull(share)
-        val src = share.openFile(
+    private suspend fun download(path: String, file: File) = withContext(Dispatchers.IO) {
+        val src = getShare().openFile(
             path,
             EnumSet.of(AccessMask.GENERIC_READ),
             null,
