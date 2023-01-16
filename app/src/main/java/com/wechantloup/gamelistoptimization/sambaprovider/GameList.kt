@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization.model
+package com.wechantloup.gamelistoptimization.sambaprovider
 
 import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
@@ -10,23 +10,20 @@ data class GameListHolder(
 
 @Keep
 data class GameList(
-    @SerializedName("platform") val platform: String?,
     @SerializedName("provider") val provider: Provider?,
-    @SerializedName("game") val games: List<Game>,
-) {
-    fun getGamesCopy() = games.map { it.copy() }
-}
+    @SerializedName("game") val games: List<GameListGame>,
+)
 
 @Keep
 data class Provider(
     @SerializedName("System") val system: String,
-    @SerializedName("software") val software: String,
-    @SerializedName("database") val database: String,
-    @SerializedName("web") val web: String,
+    @SerializedName("software") val software: String?,
+    @SerializedName("database") val database: String?,
+    @SerializedName("web") val web: String?,
 )
 
 @Keep
-data class Game(
+data class GameListGame(
     @SerializedName("id") val id: String?,
     @SerializedName("source") val source: String?,
     @SerializedName("path") val path: String,
@@ -42,7 +39,7 @@ data class Game(
     @SerializedName("marquee") val marquee: String?,
     @SerializedName("video") val video: String?,
     @SerializedName("genreid") val genreid: String?,
-    @SerializedName("favorite") var favorite: Boolean?,
-    @SerializedName("kidgame") var kidgame: Boolean?,
-    @SerializedName("hidden") var hidden: Boolean?,
+    @SerializedName("favorite") val favorite: Boolean?,
+    @SerializedName("kidgame") val kidgame: Boolean?,
+    @SerializedName("hidden") val hidden: Boolean?,
 )

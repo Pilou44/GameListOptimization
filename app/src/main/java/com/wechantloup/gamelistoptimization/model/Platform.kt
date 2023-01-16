@@ -3,9 +3,11 @@ package com.wechantloup.gamelistoptimization.model
 import com.wechantloup.gamelistoptimization.compose.DropdownComparable
 
 data class Platform(
-    val gameList: GameList,
-    val gameListBackup: GameList?,
+    val name: String,
+    val games: List<Game>,
+    val gamesBackup: List<Game>?,
     val path: String,
+    val system: String,
 ): DropdownComparable {
 
     override fun isSameAs(other: DropdownComparable): Boolean {
@@ -13,8 +15,8 @@ data class Platform(
     }
 
     override fun toString(): String {
-        return gameList.platform ?: gameList.provider?.system ?: path
+        return name
     }
 
-    fun hasBackup() = gameListBackup != null
+    fun hasBackup() = gamesBackup != null
 }

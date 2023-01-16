@@ -79,21 +79,21 @@ class MainViewModel(
 
     fun onGameSetForKids(gamePath: String, value: Boolean) {
         val platform = getCurrentPlatform() ?: return
-        platform.gameList.games.first { it.path == gamePath }.kidgame = value
+        platform.games.first { it.path == gamePath }.kidgame = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
     fun onGameSetFavorite(gamePath: String, value: Boolean) {
         val platform = getCurrentPlatform() ?: return
-        platform.gameList.games.first { it.path == gamePath }.favorite = value
+        platform.games.first { it.path == gamePath }.favorite = value
         viewModelScope.launch { savePlatform(platform) }
     }
 
     fun copyBackupValues() {
         val platform = getCurrentPlatform() ?: return
-        val gameListBackup = platform.gameListBackup ?: return
-        platform.gameList.games.forEach { game ->
-            val backup = gameListBackup.games.firstOrNull { it.id == game.id }
+        val gameListBackup = platform.gamesBackup ?: return
+        platform.games.forEach { game ->
+            val backup = gameListBackup.firstOrNull { it.id == game.id }
             backup?.let {
                 game.kidgame = backup.kidgame
                 game.favorite = backup.favorite
@@ -104,8 +104,8 @@ class MainViewModel(
 
     fun setAllFavorite() {
         val platform = getCurrentPlatform() ?: return
-        val allFavorite = platform.gameList.games.all { it.favorite == true }
-        platform.gameList.games.forEach {
+        val allFavorite = platform.games.all { it.favorite == true }
+        platform.games.forEach {
             it.favorite = !allFavorite
         }
         viewModelScope.launch { savePlatform(platform) }
@@ -113,8 +113,8 @@ class MainViewModel(
 
     fun setAllForKids() {
         val platform = getCurrentPlatform() ?: return
-        val allForKids = platform.gameList.games.all { it.kidgame == true }
-        platform.gameList.games.forEach {
+        val allForKids = platform.games.all { it.kidgame == true }
+        platform.games.forEach {
             it.kidgame = !allForKids
         }
         viewModelScope.launch { savePlatform(platform) }
@@ -122,10 +122,9 @@ class MainViewModel(
 
     fun savePlatformName(name: String) {
         val platform = getCurrentPlatform() ?: return
-        if (name.isEmpty() || name == platform.gameList.platform) return
+        if (name.isEmpty() || name == platform.name) return
 
-        val newGameList = platform.gameList.copy(platform = name)
-        val newPlatform = platform.copy(gameList = newGameList)
+        val newPlatform = platform.copy(name = name)
         viewModelScope.launch { savePlatform(newPlatform) }
     }
 

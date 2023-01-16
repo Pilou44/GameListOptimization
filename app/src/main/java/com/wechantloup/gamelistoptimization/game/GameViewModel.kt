@@ -7,9 +7,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider.Companion.GAMELIST_FILE
-import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
@@ -96,12 +96,11 @@ class GameViewModel(
         _stateFlow.value = stateFlow.value.copy(game = game)
 
         val currentPlatform = requireNotNull(getCurrentPlatform())
-        val mutableGameList = currentPlatform.gameList.games.toMutableList()
+        val mutableGameList = currentPlatform.games.toMutableList()
         val gameIndex = mutableGameList.indexOfFirst { it.path == game.path }
         mutableGameList.removeAt(gameIndex)
         mutableGameList.add(gameIndex, game)
-        val gameList = currentPlatform.gameList.copy(games = mutableGameList)
-        val platform = currentPlatform.copy(gameList = gameList)
+        val platform = currentPlatform.copy(games = mutableGameList)
 
         viewModelScope.launch {
             provider.savePlatform(platform)

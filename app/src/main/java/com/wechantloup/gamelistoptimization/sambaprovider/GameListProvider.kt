@@ -12,8 +12,6 @@ import com.hierynomus.smbj.connection.Connection
 import com.hierynomus.smbj.session.Session
 import com.hierynomus.smbj.share.DiskShare
 import com.wechantloup.gamelistoptimization.model.Game
-import com.wechantloup.gamelistoptimization.model.GameList
-import com.wechantloup.gamelistoptimization.model.GameListHolder
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import fr.arnaudguyon.xmltojsonlib.JsonToXml
@@ -62,7 +60,15 @@ class GameListProvider {
                 val filePath = "$folderName\\$GAMELIST_FILE"
                 share.extractGameList(folderName, GAMELIST_FILE)?.let { it ->
                     val gameListBackup = share.extractGameList(folderName, GAMELIST_BACKUP_FILE)
-                    platforms.add(Platform(it, gameListBackup, filePath))
+                    platforms.add(
+                        Platform(
+                            name = it.provider?.system ?: folderName,
+                            games = it.games.map { it.toGame() },
+                            gamesBackup = gameListBackup?.games?.map { it.toGame() },
+                            path = filePath,
+                            system = folderName,
+                        )
+                    )
                 }
             }
         }
@@ -71,7 +77,7 @@ class GameListProvider {
 
     suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
         val share = share ?: throw IllegalStateException("Not connected")
-        val holder = GameListHolder(platform.gameList)
+        val holder = platform.toGameListHolder()
         val path = platform.path
         val newJson = gson.toJson(holder)
 
@@ -125,32 +131,41 @@ class GameListProvider {
         return@withContext crc.value
     }
 
-    suspend fun downloadGameImage(game: Game, platform: Platform, destFile: File): Boolean = withContext(Dispatchers.IO) {
-        if (game.image == null) return@withContext false
+    suspend fun downloadGameImage(game: Game, platform: Platform, destFile: File): Boolean =
+        withContext(Dispatchers.IO) {
+            if (game.image == null) return@withContext false
 
-        val imagePath = game.getImagePath(platform)
-        Log.d(TAG, "Image path = $imagePath")
+            val imagePath = game.getImagePath(platform)
+            Log.d(TAG, "Image path = $imagePath")
 
-        download(imagePath, destFile)
+            download(imagePath, destFile)
 
-        return@withContext true
-    }
+            return@withContext true
+        }
 
-    suspend fun downloadGame(game: Game, platform: Platform, destFile: File): Boolean = withContext(Dispatchers.IO) {
-        val gamePath = game.getPath(platform)
-        Log.d(TAG, "Game path = $gamePath")
+    suspend fun downloadGame(game: Game, platform: Platform, destFile: File): Boolean =
+        withContext(Dispatchers.IO) {
+            val gamePath = game.getPath(platform)
+            Log.d(TAG, "Game path = $gamePath")
 
-        download(gamePath, destFile)
+            download(gamePath, destFile)
 
-        return@withContext true
-    }
+            return@withContext true
+        }
 
-    suspend fun uploadGame(game: Game, gameFile: File, imageFile: File?, srcPlatform: Platform, destination: Source): Boolean = withContext(Dispatchers.IO) {
+    suspend fun uploadGame(
+        game: Game,
+        gameFile: File,
+        imageFile: File?,
+        srcPlatform: Platform,
+        destination: Source,
+    ): Boolean = withContext(Dispatchers.IO) {
         val savedSource = currentSource
 
         open(destination)
 
-        val destPlatform = getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return@withContext false // ToDo Create platform
+        val destPlatform =
+            getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return@withContext false // ToDo Create platform
 
         val gamePath = game.getPath(destPlatform)
         Log.d(TAG, "Game path = $gamePath")
@@ -164,10 +179,9 @@ class GameListProvider {
             Log.i(TAG, "Image uploaded")
         }
 
-        val destGames = destPlatform.gameList.games.toMutableList()
+        val destGames = destPlatform.games.toMutableList()
             .apply { add(game) }
-        val gameList = destPlatform.gameList.copy(games = destGames)
-        val newPlatform = destPlatform.copy(gameList = gameList)
+        val newPlatform = destPlatform.copy(games = destGames)
         savePlatform(newPlatform)
 
         if (savedSource != null) {
@@ -180,15 +194,11 @@ class GameListProvider {
     }
 
     private fun Game.getImagePath(platform: Platform): String {
-        val platformPath = platform.path
-        val platfomrParentPath = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
-        return "$platfomrParentPath$image".cleanPath()
+        return "${platform.system}\\$image".cleanPath()
     }
 
     private fun Game.getPath(platform: Platform): String {
-        val platformPath = platform.path
-        val platfomrParentPath = platformPath.substring(0, platformPath.indexOf(GAMELIST_FILE))
-        return "$platfomrParentPath$path".cleanPath()
+        return "${platform.system}\\$path".cleanPath()
     }
 
     private fun String.cleanPath(): String = replace("/", "\\").replace("\\.\\", "\\")
@@ -334,7 +344,69 @@ class GameListProvider {
     private fun DiskShare.listClean(path: String, pattern: String) =
         list(path, pattern).filter { it.fileName != "." && it.fileName != ".." }
 
+    private fun GameListGame.toGame(): Game {
+        return Game(
+            id = id,
+            source = source,
+            path = path,
+            name = name,
+            desc = desc,
+            rating = rating,
+            releasedate = releasedate,
+            developer = developer,
+            publisher = publisher,
+            genre = genre,
+            players = players,
+            image = image,
+            marquee = marquee,
+            video = video,
+            genreid = genreid,
+            favorite = favorite,
+            kidgame = kidgame,
+            hidden = hidden,
+        )
+    }
+
+    private fun Game.toGameListGame(): GameListGame {
+        return GameListGame(
+            id = id,
+            source = source,
+            path = path,
+            name = name,
+            desc = desc,
+            rating = rating,
+            releasedate = releasedate,
+            developer = developer,
+            publisher = publisher,
+            genre = genre,
+            players = players,
+            image = image,
+            marquee = marquee,
+            video = video,
+            genreid = genreid,
+            favorite = favorite,
+            kidgame = kidgame,
+            hidden = hidden,
+        )
+    }
+
+    private fun Platform.toGameListHolder(): GameListHolder {
+        val games = games.map { it.toGameListGame() }
+        val provider = Provider(
+            system = name,
+            software = null,
+            database = null,
+            web = null,
+        )
+        val gameList = GameList(
+            games = games,
+            provider = provider,
+        )
+        return GameListHolder(gameList)
+    }
+
     companion object {
+
         private const val TAG = "GameListProvider"
 
         const val GAMELIST_FILE = "gamelist.xml"

@@ -31,7 +31,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.compose.Dropdown
 import com.wechantloup.gamelistoptimization.model.Game
-import com.wechantloup.gamelistoptimization.model.GameList
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 
@@ -214,7 +213,7 @@ fun GameListItem(
     onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     LazyColumn(modifier) {
-        platform?.gameList?.games?.forEach { game ->
+        platform?.games?.forEach { game ->
             item {
                 GameItem(
                     game = game,
@@ -314,15 +313,12 @@ fun GameItemPreview() {
 @Preview(showBackground = true)
 @Composable
 fun PlatformPreview() {
-    val emptyGameList = GameList(
-        platform = "Megadrive",
-        provider = null,
-        games = emptyList(),
-    )
     val pf1 = Platform(
-        gameList = emptyGameList,
-        gameListBackup = null,
+        name = "Megadrive",
+        games = emptyList(),
+        gamesBackup = null,
         path = "",
+        system = "megadrive",
     )
     Platform(
         platforms = listOf(pf1),
@@ -342,15 +338,12 @@ fun MainScreenPreview() {
         login = "",
         password = "",
     )
-    val gameList = GameList(
-        platform = "Megadrive",
-        provider = null,
-        games = emptyList(),
-    )
     val pf1 = Platform(
-        gameList = gameList,
-        gameListBackup = null,
+        name = "Megadrive",
+        games = emptyList(),
+        gamesBackup = null,
         path = "",
+        system = "megadrive",
     )
     MainScreen(
         sources = listOf(source),
