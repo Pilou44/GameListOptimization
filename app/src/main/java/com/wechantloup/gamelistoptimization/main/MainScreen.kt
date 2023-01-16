@@ -33,6 +33,7 @@ import com.wechantloup.gamelistoptimization.compose.Dropdown
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
+import com.wechantloup.gamelistoptimization.theme.Dimens
 
 @Composable
 fun MainScreen(
@@ -144,7 +145,7 @@ fun Platform(
         )
         IconButton(
             modifier = Modifier
-                .size(dimensionResource(id = R.dimen.space_xl))
+                .size(Dimens.spacingLXl)
                 .align(Alignment.CenterVertically),
             onClick = onEditClicked
         ) {
@@ -179,7 +180,7 @@ fun Header(
         }
         IconButton(
             modifier = Modifier
-                .size(dimensionResource(id = R.dimen.space_xl))
+                .size(Dimens.spacingLXl)
                 .align(Alignment.CenterVertically),
             onClick = onAllChildClicked
         ) {
@@ -191,7 +192,7 @@ fun Header(
         }
         IconButton(
             modifier = Modifier
-                .size(dimensionResource(id = R.dimen.space_xl))
+                .size(Dimens.spacingLXl)
                 .align(Alignment.CenterVertically),
             onClick = onAllFavoriteClicked) {
             Icon(
@@ -265,20 +266,20 @@ fun GameItem(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .weight(1f)
-                    .padding(dimensionResource(R.dimen.space_s)),
+                    .padding(Dimens.spacingS),
                 text = name,
             )
             Checkbox(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
-                    .width(dimensionResource(id = R.dimen.space_xl)),
+                    .width(Dimens.spacingLXl),
                 checked = isForChild,
                 onCheckedChange = onForChildClicked,
             )
             Checkbox(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
-                    .width(dimensionResource(id = R.dimen.space_xl)),
+                    .width(Dimens.spacingLXl),
                 checked = isFavorite,
                 onCheckedChange = onFavoriteClicked,
             )

@@ -1,7 +1,6 @@
 package com.wechantloup.gamelistoptimization.scraper
 
 import android.util.Log
-import com.wechantloup.gamelistoptimization.game.GameViewModel
 import com.wechantloup.gamelistoptimization.scraper.model.ScraperSystem
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.OkHttpClientFactory
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.SystemListResponse
