@@ -24,6 +24,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.compose.BackButton
+import com.wechantloup.gamelistoptimization.compose.FullScreenLoader
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.theme.Dimens
 
@@ -37,6 +38,7 @@ fun EditGameScreen(
         editableGame = requireNotNull(state.value.game),
         scrapedGame = state.value.scrapedGame,
         image = state.value.image,
+        isLoaderVisible = state.value.showLoader,
         onBackPressed = onBackPressed,
         saveGame = viewModel::saveGame,
         scrapGame = viewModel::scrapGame,
@@ -49,6 +51,7 @@ private fun EditGameScreen(
     editableGame: Game,
     scrapedGame: Game?,
     image: String?,
+    isLoaderVisible: Boolean,
     onBackPressed: () -> Unit,
     saveGame: (Game) -> Unit,
     scrapGame: () -> Unit,
@@ -94,61 +97,61 @@ private fun EditGameScreen(
             )
         }
     ) { paddingValues ->
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    top = Dimens.spacingS,
-                    start = Dimens.spacingS,
-                    end = Dimens.spacingS,
-                    bottom = Dimens.spacingS + paddingValues.calculateBottomPadding(),
-                )
+        FullScreenLoader(
+            modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding()),
+            isVisible = isLoaderVisible,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                TextField(
-                    modifier = Modifier.padding(Dimens.spacingS),
-                    value = game.name ?: game.path,
-                    onValueChange = {
-                        game = game.copy(name = it)
-                        modified = true
-                    },
-                    label = { Text(stringResource(R.string.game_name)) },
-                )
-                TextField(
-                    modifier = Modifier.padding(Dimens.spacingS),
-                    value = game.developer ?: "",
-                    onValueChange = {
-                        game = game.copy(developer = it)
-                        modified = true
-                    },
-                    label = { Text(stringResource(R.string.game_developer)) },
-                )
-                TextField(
-                    modifier = Modifier.padding(Dimens.spacingS),
-                    value = game.publisher ?: "",
-                    onValueChange = {
-                        game = game.copy(publisher = it)
-                        modified = true
-                    },
-                    label = { Text(stringResource(R.string.game_publisher)) },
-                )
-                TextField(
-                    modifier = Modifier.padding(Dimens.spacingS),
-                    value = game.desc ?: "",
-                    onValueChange = {
-                        game = game.copy(desc = it)
-                        modified = true
-                    },
-                    label = { Text(stringResource(R.string.game_desc)) },
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Dimens.spacingS)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    TextField(
+                        modifier = Modifier.padding(Dimens.spacingS),
+                        value = game.name ?: game.path,
+                        onValueChange = {
+                            game = game.copy(name = it)
+                            modified = true
+                        },
+                        label = { Text(stringResource(R.string.game_name)) },
+                    )
+                    TextField(
+                        modifier = Modifier.padding(Dimens.spacingS),
+                        value = game.developer ?: "",
+                        onValueChange = {
+                            game = game.copy(developer = it)
+                            modified = true
+                        },
+                        label = { Text(stringResource(R.string.game_developer)) },
+                    )
+                    TextField(
+                        modifier = Modifier.padding(Dimens.spacingS),
+                        value = game.publisher ?: "",
+                        onValueChange = {
+                            game = game.copy(publisher = it)
+                            modified = true
+                        },
+                        label = { Text(stringResource(R.string.game_publisher)) },
+                    )
+                    TextField(
+                        modifier = Modifier.padding(Dimens.spacingS),
+                        value = game.desc ?: "",
+                        onValueChange = {
+                            game = game.copy(desc = it)
+                            modified = true
+                        },
+                        label = { Text(stringResource(R.string.game_desc)) },
+                    )
+                }
+                GlideImage(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(Dimens.spacingS),
+                    model = image,
+                    contentDescription = game.name,
                 )
             }
-            GlideImage(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(Dimens.spacingS),
-                model = image,
-                contentDescription = game.name,
-            )
         }
     }
 }

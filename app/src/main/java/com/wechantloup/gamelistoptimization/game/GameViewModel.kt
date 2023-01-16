@@ -103,6 +103,7 @@ class GameViewModel(
     }
 
     fun scrapGame() {
+        showLoader(true)
         viewModelScope.launch {
             val game = requireNotNull(getCurrentGame())
             val platform = requireNotNull(getCurrentPlatform())
@@ -134,6 +135,7 @@ class GameViewModel(
             )
             Log.i(TAG, "Set new scraper info for ${newGame.name}")
             _stateFlow.value = stateFlow.value.copy(scrapedGame = newGame)
+            showLoader(false)
         }
     }
 
@@ -180,6 +182,10 @@ class GameViewModel(
         }
     }
 
+    private fun showLoader(show: Boolean) {
+        _stateFlow.value = stateFlow.value.copy(showLoader = show)
+    }
+
     private fun getImageFile(source: Source, platform: Platform, game: Game): File {
         val platformPath = platform.path.substring(0, platform.path.indexOf(GAMELIST_FILE))
         val name = URLEncoder
@@ -215,6 +221,7 @@ class GameViewModel(
         val game: Game? = null,
         val scrapedGame: Game? = null,
         val image: String? = null,
+        val showLoader: Boolean = false,
         val copyDestinations: List<Source> = emptyList(),
     )
 
