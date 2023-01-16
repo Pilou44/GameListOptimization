@@ -35,11 +35,11 @@ fun EditGameScreen(
 ) {
     val state = viewModel.stateFlow.collectAsState()
     EditGameScreen(
-        editableGame = requireNotNull(state.value.game),
-        scrapedGame = state.value.scrapedGame,
+        game = requireNotNull(state.value.game),
         image = state.value.image,
         isLoaderVisible = state.value.showLoader,
         onBackPressed = onBackPressed,
+        onGameChanged = viewModel::onGameChanged,
         saveGame = viewModel::saveGame,
         scrapGame = viewModel::scrapGame,
     )
@@ -48,27 +48,19 @@ fun EditGameScreen(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun EditGameScreen(
-    editableGame: Game,
-    scrapedGame: Game?,
+    game: Game,
     image: String?,
     isLoaderVisible: Boolean,
     onBackPressed: () -> Unit,
-    saveGame: (Game) -> Unit,
+    onGameChanged: (Game) -> Unit,
+    saveGame: () -> Unit,
     scrapGame: () -> Unit,
 ) {
-    var game by remember { mutableStateOf(editableGame) }
-    var savedScrapedGame by remember { mutableStateOf(scrapedGame) }
     var modified by remember { mutableStateOf(false) }
-
-    if (scrapedGame != savedScrapedGame && scrapedGame != null) {
-        savedScrapedGame = scrapedGame
-        game = scrapedGame
-        modified = true
-    }
 
     val saveAndGoBack: () -> Unit = {
         if (modified)
-            saveGame(game)
+            saveGame()
         onBackPressed()
     }
 
@@ -90,7 +82,10 @@ private fun EditGameScreen(
                 backgroundColor = MaterialTheme.colors.surface,
                 navigationIcon = { BackButton(onBackPressed = saveAndGoBack) },
                 actions = {
-                    Button(onClick = { scrapGame() }) {
+                    Button(onClick = {
+                        modified = true
+                        scrapGame()
+                    }) {
                         Text(text = "Scrap")
                     }
                 },
@@ -111,7 +106,7 @@ private fun EditGameScreen(
                         modifier = Modifier.padding(Dimens.spacingS),
                         value = game.name ?: game.path,
                         onValueChange = {
-                            game = game.copy(name = it)
+                            onGameChanged(game.copy(name = it))
                             modified = true
                         },
                         label = { Text(stringResource(R.string.game_name)) },
@@ -120,7 +115,7 @@ private fun EditGameScreen(
                         modifier = Modifier.padding(Dimens.spacingS),
                         value = game.developer ?: "",
                         onValueChange = {
-                            game = game.copy(developer = it)
+                            onGameChanged(game.copy(developer = it))
                             modified = true
                         },
                         label = { Text(stringResource(R.string.game_developer)) },
@@ -129,7 +124,7 @@ private fun EditGameScreen(
                         modifier = Modifier.padding(Dimens.spacingS),
                         value = game.publisher ?: "",
                         onValueChange = {
-                            game = game.copy(publisher = it)
+                            onGameChanged(game.copy(publisher = it))
                             modified = true
                         },
                         label = { Text(stringResource(R.string.game_publisher)) },
@@ -138,7 +133,7 @@ private fun EditGameScreen(
                         modifier = Modifier.padding(Dimens.spacingS),
                         value = game.desc ?: "",
                         onValueChange = {
-                            game = game.copy(desc = it)
+                            onGameChanged(game.copy(desc = it))
                             modified = true
                         },
                         label = { Text(stringResource(R.string.game_desc)) },

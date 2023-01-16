@@ -77,9 +77,12 @@ class GameViewModel(
         }
     }
 
-    fun saveGame(game: Game) {
+    fun onGameChanged(game: Game) {
         _stateFlow.value = stateFlow.value.copy(game = game)
+    }
 
+    fun saveGame() {
+        val game = requireNotNull(getCurrentGame())
         val currentPlatform = requireNotNull(getCurrentPlatform())
         val mutableGameList = currentPlatform.games.toMutableList()
         val gameIndex = mutableGameList.indexOfFirst { it.path == game.path }
@@ -134,7 +137,7 @@ class GameViewModel(
                 hidden = game.hidden,
             )
             Log.i(TAG, "Set new scraper info for ${newGame.name}")
-            _stateFlow.value = stateFlow.value.copy(scrapedGame = newGame)
+            _stateFlow.value = stateFlow.value.copy(game = newGame)
             showLoader(false)
         }
     }
@@ -219,7 +222,6 @@ class GameViewModel(
         val source: Source? = null,
         val platform: Platform? = null,
         val game: Game? = null,
-        val scrapedGame: Game? = null,
         val image: String? = null,
         val showLoader: Boolean = false,
         val copyDestinations: List<Source> = emptyList(),
