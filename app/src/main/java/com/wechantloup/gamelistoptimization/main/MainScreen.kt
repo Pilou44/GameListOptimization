@@ -320,6 +320,7 @@ fun PlatformPreview() {
         gamesBackup = null,
         path = "",
         system = "megadrive",
+        extensions = emptyList(),
     )
     Platform(
         platforms = listOf(pf1),
@@ -345,6 +346,7 @@ fun MainScreenPreview() {
         gamesBackup = null,
         path = "",
         system = "megadrive",
+        extensions = emptyList(),
     )
     MainScreen(
         sources = listOf(source),

@@ -3,6 +3,7 @@ package com.wechantloup.gamelistoptimization.sambaprovider
 import android.util.Log
 import com.google.gson.Gson
 import com.hierynomus.msdtyp.AccessMask
+import com.hierynomus.msfscc.FileAttributes
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
 import com.hierynomus.mssmb2.SMBApiException
@@ -10,6 +11,7 @@ import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.connection.Connection
 import com.hierynomus.smbj.session.Session
+import com.hierynomus.smbj.share.Directory
 import com.hierynomus.smbj.share.DiskShare
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
@@ -30,6 +32,13 @@ class GameListProvider {
     private val gson = Gson()
     private var share: DiskShare? = null
     private var currentSource: Source? = null
+
+    private val String.extension: String?
+        get() {
+            val dotIndex = lastIndexOf(".")
+            if (dotIndex == -1) return null
+            return substring(dotIndex + 1)
+        }
 
     suspend fun open(source: Source): Boolean = withContext(Dispatchers.IO) {
         if (source != currentSource) {
@@ -67,6 +76,7 @@ class GameListProvider {
                             gamesBackup = gameListBackup?.games?.map { it.toGame() },
                             path = filePath,
                             system = folderName,
+                            extensions = emptyList() // ToDo
                         )
                     )
                 }
@@ -194,6 +204,62 @@ class GameListProvider {
         }
 
         return@withContext true
+    }
+
+    suspend fun cleanGameList(platform: Platform): Platform = withContext(Dispatchers.IO) {
+        val directory: Directory = getShare().openDirectory(
+            platform.system,
+            EnumSet.of(AccessMask.FILE_LIST_DIRECTORY),
+            EnumSet.of(FileAttributes.FILE_ATTRIBUTE_DIRECTORY),
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OPEN,
+            null,
+        )
+        val files = directory.list()
+        Log.d(TAG, "${files.size} files found")
+
+        val games = directory.list()
+            .filter { platform.extensions.contains(it.fileName.extension) }
+            .map { it.fileName }
+        Log.d(TAG, "${games.size} games found")
+
+        val platformGames = platform.games.toMutableList()
+        Log.d(TAG, "Platform contains ${platformGames.size} games")
+        platform.games.forEach {
+            val fileName = it.path.substring(it.path.lastIndexOf("/") + 1)
+            if (!games.contains(fileName)) {
+                platformGames.remove(it)
+            }
+        }
+        Log.d(TAG, "Platform contains ${platformGames.size} games after removing missing files")
+
+        val platformGameNames = platformGames.map { it.path.substring(it.path.lastIndexOf("/") + 1) }
+        games.forEach {
+            if (!platformGameNames.contains(it)) {
+                platformGames.add(Game(
+                    id = null,
+                    source = null,
+                    path = "./$it",
+                    name = null,
+                    desc = null,
+                    rating = null,
+                    releasedate = null,
+                    developer = null,
+                    publisher = null,
+                    genre = null,
+                    players = null,
+                    image = null,
+                    marquee = null,
+                    video = null,
+                    genreid = null,
+                    favorite = null,
+                    kidgame = null,
+                    hidden = null,
+                ))
+            }
+        }
+        Log.d(TAG, "Platform contains ${platformGames.size} games after adding remaining files")
+        return@withContext platform.copy(games = platformGames)
     }
 
     private suspend fun getShare(): DiskShare {

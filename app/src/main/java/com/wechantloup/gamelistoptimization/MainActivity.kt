@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private val scraper = Scraper()
 
     private val mainViewModel by viewModels<MainViewModel> {
-        MainViewModelFactory(this, provider)
+        MainViewModelFactory(this, provider, scraper)
     }
 
     private val gameViewModel by viewModels<GameViewModel> {

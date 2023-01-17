@@ -8,6 +8,7 @@ data class Platform(
     val gamesBackup: List<Game>?,
     val path: String,
     val system: String,
+    val extensions: List<String>,
 ): DropdownComparable {
 
     override fun isSameAs(other: DropdownComparable): Boolean {

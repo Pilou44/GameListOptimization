@@ -1,9 +1,10 @@
 package com.wechantloup.gamelistoptimization.main
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -22,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.compose.BackButton
+import com.wechantloup.gamelistoptimization.compose.FullScreenLoader
 
 @Composable
 fun EditPlatformScreen(
@@ -33,16 +35,20 @@ fun EditPlatformScreen(
     val platformName = platform.toString()
     EditPlatformScreen(
         platformName = platformName,
+        isLoaderVisible = state.value.showLoader,
         saveName = viewModel::savePlatformName,
         onBackPressed = onBackPressed,
+        onCleanClicked = viewModel::cleanPlatform,
     )
 }
 
 @Composable
 fun EditPlatformScreen(
     platformName: String,
+    isLoaderVisible: Boolean,
     saveName: (String) -> Unit,
     onBackPressed: () -> Unit,
+    onCleanClicked: () -> Unit,
 ) {
     var name by remember { mutableStateOf(platformName) }
 
@@ -70,16 +76,23 @@ fun EditPlatformScreen(
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        FullScreenLoader(
+            modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding()),
+            isVisible = isLoaderVisible,
         ) {
-            TextField(
-                modifier = Modifier.align(Alignment.Center),
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Label") }
-            )
+            Column(modifier = Modifier
+                .fillMaxSize()
+            ) {
+                TextField(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Label") }
+                )
+                Button(onClick = onCleanClicked) {
+                    Text(text = "Clean")
+                }
+            }
         }
     }
 }
@@ -90,6 +103,8 @@ fun EditPlatformScreenPreview() {
     EditPlatformScreen(
         platformName = "Megadrive",
         saveName = {},
+        isLoaderVisible = false,
         onBackPressed = {},
+        onCleanClicked = {}
     )
 }

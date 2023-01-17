@@ -2,6 +2,7 @@ package com.wechantloup.gamelistoptimization.scraper
 
 import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Game
+import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.scraper.model.ScraperSystem
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.OkHttpClientFactory
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.GameInfoResponse
@@ -25,7 +26,7 @@ class Scraper {
         fileSize: Long,
         crc: Long,
     ): Game = withContext(Dispatchers.IO) {
-        val systemId = getSystemId(system)
+        val systemId = getSystem(system).id
         val info = scraper.getGameInfo(
             crcHexa = crc.toHexString(),
             romName = romName,
@@ -34,6 +35,23 @@ class Scraper {
         )
         Log.d(TAG, info.response.game.serialize())
         return@withContext info.toGame(romName)
+    }
+
+    suspend fun getPlatform(system: String): Platform {
+        return getSystem(system).toPlatform(system)
+    }
+
+    private fun ScraperSystem.toPlatform(system: String): Platform {
+        val userCountry = Locale.getDefault().country.lowercase()
+        val name = if (userCountry.isEuCountry() && euName != null) euName else usName
+        return Platform(
+            name = name ?: system,
+            games = emptyList(),
+            gamesBackup = null,
+            path = "",
+            system = system,
+            extensions = extensions + "zip",
+        )
     }
 
     private fun GameInfoResponse.toGame(romName: String): Game = with(response.game) {
@@ -85,10 +103,9 @@ class Scraper {
         return euCountries.contains(this.uppercase())
     }
 
-    private suspend fun getSystemId(systemName: String): Int {
+    private suspend fun getSystem(systemName: String): ScraperSystem {
         val systems = getSystems()
-        val system = systems.first { it.systemNames.contains(systemName) }
-        return system.id
+        return systems.first { it.systemNames.contains(systemName) }
     }
 
     private suspend fun getSystems(): List<ScraperSystem> = withContext(Dispatchers.IO) {
@@ -103,6 +120,7 @@ class Scraper {
     }
 
     companion object {
+
         private const val TAG = "Scraper"
 
         private val DEFAULT_LANGUAGE = Locale.ENGLISH.language
