@@ -1,4 +1,4 @@
-package com.wechantloup.gamelistoptimization.main
+package com.wechantloup.gamelistoptimization.platform
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
@@ -27,18 +27,19 @@ import com.wechantloup.gamelistoptimization.compose.FullScreenLoader
 
 @Composable
 fun EditPlatformScreen(
-    viewModel: MainViewModel,
+    viewModel: PlatformViewModel,
     onBackPressed: () -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
-    val platform = state.value.platforms[state.value.currentPlatformIndex]
+    val platform = state.value.platform
     val platformName = platform.toString()
     EditPlatformScreen(
         platformName = platformName,
         isLoaderVisible = state.value.showLoader,
-        saveName = viewModel::savePlatformName,
-        onBackPressed = onBackPressed,
+        save = viewModel::savePlatform,
+        updateName = viewModel::updateName,
         onCleanClicked = viewModel::cleanPlatform,
+        onBackPressed = onBackPressed,
     )
 }
 
@@ -46,15 +47,15 @@ fun EditPlatformScreen(
 fun EditPlatformScreen(
     platformName: String,
     isLoaderVisible: Boolean,
-    saveName: (String) -> Unit,
-    onBackPressed: () -> Unit,
+    save: (() -> Unit) -> Unit,
+    updateName: (String) -> Unit,
     onCleanClicked: () -> Unit,
+    onBackPressed: () -> Unit,
 ) {
-    var name by remember { mutableStateOf(platformName) }
+    var modified by remember { mutableStateOf(false) }
 
     val saveAndGoBack: () -> Unit = {
-        saveName(name)
-        onBackPressed()
+        if (modified) save(onBackPressed) else onBackPressed()
     }
 
     BackHandler {
@@ -85,11 +86,19 @@ fun EditPlatformScreen(
             ) {
                 TextField(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    value = name,
-                    onValueChange = { name = it },
+                    value = platformName,
+                    onValueChange = {
+                        modified = true
+                        updateName(it)
+                    },
                     label = { Text("Label") }
                 )
-                Button(onClick = onCleanClicked) {
+                Button(
+                    onClick = {
+                        modified = true
+                        onCleanClicked()
+                    }
+                ) {
                     Text(text = "Clean")
                 }
             }
@@ -102,9 +111,10 @@ fun EditPlatformScreen(
 fun EditPlatformScreenPreview() {
     EditPlatformScreen(
         platformName = "Megadrive",
-        saveName = {},
         isLoaderVisible = false,
+        save = {},
+        updateName = {},
+        onCleanClicked = {},
         onBackPressed = {},
-        onCleanClicked = {}
     )
 }

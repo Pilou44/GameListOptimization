@@ -127,32 +127,6 @@ class MainViewModel(
         viewModelScope.launch { savePlatform(platform) }
     }
 
-    fun savePlatformName(name: String) {
-        val platform = getCurrentPlatform() ?: return
-        if (name.isEmpty() || name == platform.name) return
-
-        val newPlatform = platform.copy(name = name)
-        viewModelScope.launch { savePlatform(newPlatform) }
-    }
-
-    fun cleanPlatform() {
-        showLoader(true)
-        val platform = getCurrentPlatform() ?: return
-        viewModelScope.launch {
-            val updatedPlatform = scraper
-                .getPlatform(platform.system)
-                .copy(
-                    path = platform.path,
-                    games = platform.games,
-                    gamesBackup = platform.gamesBackup,
-                )
-
-            val cleanedPlatform = provider.cleanGameList(updatedPlatform)
-            savePlatform(cleanedPlatform)
-            showLoader(false)
-        }
-    }
-
     private fun showLoader(show: Boolean) {
         _stateFlow.value = stateFlow.value.copy(showLoader = show)
     }

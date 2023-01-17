@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +37,7 @@ import com.wechantloup.gamelistoptimization.theme.Dimens
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    onEditPlatformClicked: () -> Unit,
+    onEditPlatformClicked: (Platform) -> Unit,
     onGameClicked: (Source, Platform, Game) -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
@@ -72,7 +71,7 @@ fun MainScreen(
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
-    onEditPlatformClicked: () -> Unit,
+    onEditPlatformClicked: (Platform) -> Unit,
     onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     val scaffoldState = rememberScaffoldState()
@@ -132,7 +131,7 @@ fun Platform(
     platforms: List<Platform>,
     selectedPlatformIndex: Int,
     onPlatformSelected: (Platform) -> Unit,
-    onEditClicked: () -> Unit,
+    onEditClicked: (Platform) -> Unit,
 ) {
     Row(modifier = modifier) {
         Log.d("MainScreen", "Set platform drop down")
@@ -147,7 +146,11 @@ fun Platform(
             modifier = Modifier
                 .size(Dimens.spacingLXl)
                 .align(Alignment.CenterVertically),
-            onClick = onEditClicked
+            enabled = selectedPlatformIndex > -1,
+            onClick = {
+                val platform = platforms[selectedPlatformIndex]
+                onEditClicked(platform)
+            },
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_edit_24),

@@ -15,10 +15,12 @@ import com.wechantloup.gamelistoptimization.game.EditGameScreen
 import com.wechantloup.gamelistoptimization.game.GameScreen
 import com.wechantloup.gamelistoptimization.game.GameViewModel
 import com.wechantloup.gamelistoptimization.game.GameViewModelFactory
-import com.wechantloup.gamelistoptimization.main.EditPlatformScreen
+import com.wechantloup.gamelistoptimization.platform.EditPlatformScreen
 import com.wechantloup.gamelistoptimization.main.MainScreen
 import com.wechantloup.gamelistoptimization.main.MainViewModel
 import com.wechantloup.gamelistoptimization.main.MainViewModelFactory
+import com.wechantloup.gamelistoptimization.platform.PlatformViewModel
+import com.wechantloup.gamelistoptimization.platform.PlatformViewModelFactory
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
 import com.wechantloup.gamelistoptimization.theme.WechantTheme
@@ -43,6 +45,10 @@ class MainActivity : AppCompatActivity() {
         GameViewModelFactory(this, provider, scraper)
     }
 
+    private val platformViewModel by viewModels<PlatformViewModel> {
+        PlatformViewModelFactory(this, provider, scraper)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -50,7 +56,6 @@ class MainActivity : AppCompatActivity() {
             WechantTheme {
                 NavigationHost(
                     navController = navController,
-                    viewModel = mainViewModel,
                 )
             }
         }
@@ -59,15 +64,17 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun NavigationHost(
         navController: NavHostController,
-        viewModel: MainViewModel,
         modifier: Modifier = Modifier,
     ) {
         NavHost(navController = navController, startDestination = MAIN_SCREEN, modifier) {
 
             composable(MAIN_SCREEN) {
                 MainScreen(
-                    viewModel = viewModel,
-                    onEditPlatformClicked = { navController.navigate(EDIT_PLATFORM_SCREEN) },
+                    viewModel = mainViewModel,
+                    onEditPlatformClicked = { platform ->
+                        platformViewModel.setPlatform(platform)
+                        navController.navigate(EDIT_PLATFORM_SCREEN)
+                    },
                     onGameClicked = { source, platform, game ->
                         gameViewModel.openGame(source, platform, game)
                         navController.navigate(GAME_SCREEN)
@@ -77,8 +84,11 @@ class MainActivity : AppCompatActivity() {
 
             composable(EDIT_PLATFORM_SCREEN) {
                 EditPlatformScreen(
-                    viewModel = viewModel,
-                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) },
+                    viewModel = platformViewModel,
+                    onBackPressed = {
+                        mainViewModel.refresh()
+                        navController.popBackStack(route = MAIN_SCREEN, inclusive = false)
+                    },
                 )
             }
 
