@@ -7,12 +7,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.load.HttpException
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider.Companion.GAMELIST_FILE
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
+import com.wechantloup.gamelistoptimization.platform.PlatformViewModel
 import com.wechantloup.gamelistoptimization.scraper.Scraper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -110,34 +112,38 @@ class GameViewModel(
         viewModelScope.launch {
             val game = requireNotNull(getCurrentGame())
             val platform = requireNotNull(getCurrentPlatform())
-            val scrapedGame = scraper.scrapGame(
-                romName = game.getRomName(),
-                system = platform.system,
-                fileSize = provider.getGameSize(game, platform),
-                crc = provider.getGameCrc(game, platform),
-            )
-            val newGame = Game(
-                id = scrapedGame.id ?: game.id,
-                source = scrapedGame.source ?: game.source,
-                path = game.path,
-                name = scrapedGame.name ?: game.name,
-                desc = scrapedGame.desc ?: game.desc,
-                rating = scrapedGame.rating ?: game.rating,
-                releasedate = scrapedGame.releasedate ?: game.releasedate,
-                developer = scrapedGame.developer ?: game.developer,
-                publisher = scrapedGame.publisher ?: game.publisher,
-                genre = scrapedGame.genre ?: game.genre,
-                players = scrapedGame.players ?: game.players,
-                image = scrapedGame.image ?: game.image,
-                marquee = scrapedGame.marquee ?: game.marquee,
-                video = scrapedGame.video ?: game.video,
-                genreid = scrapedGame.genreid ?: game.genreid,
-                favorite = game.favorite,
-                kidgame = game.kidgame,
-                hidden = game.hidden,
-            )
-            Log.i(TAG, "Set new scraper info for ${newGame.name}")
-            _stateFlow.value = stateFlow.value.copy(game = newGame)
+            try {
+                val scrapedGame = scraper.scrapGame(
+                    romName = game.getRomName(),
+                    system = platform.system,
+                    fileSize = provider.getGameSize(game, platform),
+                    crc = provider.getGameCrc(game, platform),
+                )
+                val newGame = Game(
+                    id = scrapedGame.id ?: game.id,
+                    source = scrapedGame.source ?: game.source,
+                    path = game.path,
+                    name = scrapedGame.name ?: game.name,
+                    desc = scrapedGame.desc ?: game.desc,
+                    rating = scrapedGame.rating ?: game.rating,
+                    releasedate = scrapedGame.releasedate ?: game.releasedate,
+                    developer = scrapedGame.developer ?: game.developer,
+                    publisher = scrapedGame.publisher ?: game.publisher,
+                    genre = scrapedGame.genre ?: game.genre,
+                    players = scrapedGame.players ?: game.players,
+                    image = scrapedGame.image ?: game.image,
+                    marquee = scrapedGame.marquee ?: game.marquee,
+                    video = scrapedGame.video ?: game.video,
+                    genreid = scrapedGame.genreid ?: game.genreid,
+                    favorite = game.favorite,
+                    kidgame = game.kidgame,
+                    hidden = game.hidden,
+                )
+                Log.i(TAG, "Set new scraper info for ${newGame.name}")
+                _stateFlow.value = stateFlow.value.copy(game = newGame)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to scrap ${game.path}", e)
+            }
             showLoader(false)
         }
     }

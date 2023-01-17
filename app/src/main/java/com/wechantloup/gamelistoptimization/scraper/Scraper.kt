@@ -55,6 +55,11 @@ class Scraper {
     }
 
     private fun GameInfoResponse.toGame(romName: String): Game = with(response.game) {
+        if (unknownGame) {
+            Log.w(TAG, "Unknown game $romName")
+            return unknownGame(romName)
+        }
+
         return Game(
             id = id,
             source = "ScreenScraper.fr",
@@ -67,13 +72,14 @@ class Scraper {
             publisher = publisher?.text,
             genre = genres?.map { it.names.extractFromLanguage() }?.joinToString { ", " },
             players = players?.text,
-            image = null,
-            marquee = null,
-            video = null,
             genreid = genres?.first()?.id,
-            favorite = false,
-            kidgame = false,
-            hidden = false,
+        )
+    }
+
+    private fun unknownGame(romName: String): Game {
+        return Game(
+            path = "./$romName",
+            name = romName.substring(0, romName.lastIndexOf(".")),
         )
     }
 

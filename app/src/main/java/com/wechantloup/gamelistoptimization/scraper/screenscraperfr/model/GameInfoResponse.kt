@@ -20,6 +20,7 @@ class Game(
     @SerializedName("editeur") val publisher: IdString?,
     @SerializedName("genres") val genres: List<Genre>?,
     @SerializedName("joueurs") val players: TextString?,
+    @SerializedName("notgame") val unknownGame: Boolean,
 )
 
 class TextString(
