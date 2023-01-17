@@ -142,8 +142,6 @@ class GameViewModel(
         }
     }
 
-    private fun Game.getRomName() = path.substring(path.lastIndexOf("/") + 1)
-
     private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {
         val game = requireNotNull(getCurrentGame())
         val platform = requireNotNull(getCurrentPlatform())

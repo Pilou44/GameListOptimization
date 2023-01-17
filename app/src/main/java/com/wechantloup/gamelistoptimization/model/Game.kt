@@ -19,4 +19,6 @@ data class Game(
     var favorite: Boolean?,
     var kidgame: Boolean?,
     var hidden: Boolean?,
-)
+) {
+    fun getRomName() = path.substring(path.lastIndexOf("/") + 1)
+}

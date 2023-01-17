@@ -39,6 +39,7 @@ fun EditPlatformScreen(
         save = viewModel::savePlatform,
         updateName = viewModel::updateName,
         onCleanClicked = viewModel::cleanPlatform,
+        scrapAllGames = viewModel::scrapAllGames,
         onBackPressed = onBackPressed,
     )
 }
@@ -50,6 +51,7 @@ fun EditPlatformScreen(
     save: (() -> Unit) -> Unit,
     updateName: (String) -> Unit,
     onCleanClicked: () -> Unit,
+    scrapAllGames: () -> Unit,
     onBackPressed: () -> Unit,
 ) {
     var modified by remember { mutableStateOf(false) }
@@ -101,6 +103,14 @@ fun EditPlatformScreen(
                 ) {
                     Text(text = "Clean")
                 }
+                Button(
+                    onClick = {
+                        modified = true
+                        scrapAllGames()
+                    }
+                ) {
+                    Text(text = "Scrap all games")
+                }
             }
         }
     }
@@ -115,6 +125,7 @@ fun EditPlatformScreenPreview() {
         save = {},
         updateName = {},
         onCleanClicked = {},
+        scrapAllGames = {},
         onBackPressed = {},
     )
 }
