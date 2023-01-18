@@ -5,17 +5,19 @@ import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.utils.getPath
 
 class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameListProvider) {
 
     suspend fun scrapGame(game: Game, platform: Platform): Game {
         val romName = game.getRomName()
+        val gamePath = game.getPath(platform)
         val scrapedGame = try {
             scraper.scrapGame(
                 romName = romName,
                 system = platform.system,
-                fileSize = provider.getGameSize(game, platform),
-                crc = provider.getGameCrc(game, platform),
+                fileSize = provider.getFileSize(gamePath),
+                crc = provider.getFileCrc(gamePath),
             )
         } catch (e: Exception) {
             Log.e(TAG, "Unable to scrap ${game.getRomName()}", e)

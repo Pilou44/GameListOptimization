@@ -7,11 +7,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
-import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
+import com.wechantloup.gamelistoptimization.usecase.GetPlatformsUseCase
+import com.wechantloup.gamelistoptimization.usecase.SavePlatformUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,19 +20,20 @@ import kotlinx.coroutines.launch
 class MainViewModelFactory(
     private val activity: Activity,
     private val provider: GameListProvider,
-    private val scraper: Scraper,
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val getPlatformsUseCase = GetPlatformsUseCase(provider)
+        val savePlatformUseCase = SavePlatformUseCase(provider)
         @Suppress("UNCHECKED_CAST")
-        return MainViewModel(activity.application, provider, scraper) as T
+        return MainViewModel(activity.application, getPlatformsUseCase, savePlatformUseCase) as T
     }
 }
 
 class MainViewModel(
     application: Application,
-    private val provider: GameListProvider,
-    private val scraper: Scraper,
+    private val getPlatformsUseCase: GetPlatformsUseCase,
+    private val savePlatformUseCase: SavePlatformUseCase,
 ) : AndroidViewModel(application) {
 
     private val _stateFlow = MutableStateFlow(State())
@@ -43,21 +45,12 @@ class MainViewModel(
         _stateFlow.value = stateFlow.value.copy(sources = gameSources)
     }
 
-    override fun onCleared() {
-        viewModelScope.launch {
-            provider.close()
-            super.onCleared()
-        }
-    }
-
     fun refresh() {
         viewModelScope.launch {
             val source = requireNotNull(getCurrentSource())
-            if (provider.open(source)) {
-                _stateFlow.value = stateFlow.value.copy(
-                    platforms = provider.getPlatforms(),
-                )
-            }
+            _stateFlow.value = stateFlow.value.copy(
+                platforms = getPlatformsUseCase.getPlatforms(source),
+            )
         }
     }
 
@@ -69,12 +62,10 @@ class MainViewModel(
             currentPlatformIndex = -1,
         )
         viewModelScope.launch {
-            if (provider.open(source)) {
-                _stateFlow.value = stateFlow.value.copy(
-                    platforms = provider.getPlatforms(),
-                    currentPlatformIndex = -1,
-                )
-            }
+            _stateFlow.value = stateFlow.value.copy(
+                platforms = getPlatformsUseCase.getPlatforms(source),
+                currentPlatformIndex = -1,
+            )
         }
     }
 
@@ -85,18 +76,27 @@ class MainViewModel(
     }
 
     fun onGameSetForKids(gamePath: String, value: Boolean) {
+        showLoader(true)
         val platform = getCurrentPlatform() ?: return
         platform.games.first { it.path == gamePath }.kidgame = value
-        viewModelScope.launch { savePlatform(platform) }
+        viewModelScope.launch {
+            savePlatform(platform)
+            showLoader(false)
+        }
     }
 
     fun onGameSetFavorite(gamePath: String, value: Boolean) {
+        showLoader(true)
         val platform = getCurrentPlatform() ?: return
         platform.games.first { it.path == gamePath }.favorite = value
-        viewModelScope.launch { savePlatform(platform) }
+        viewModelScope.launch {
+            savePlatform(platform)
+            showLoader(false)
+        }
     }
 
     fun copyBackupValues() {
+        showLoader(true)
         val platform = getCurrentPlatform() ?: return
         val gameListBackup = platform.gamesBackup ?: return
         platform.games.forEach { game ->
@@ -106,25 +106,36 @@ class MainViewModel(
                 game.favorite = backup.favorite
             }
         }
-        viewModelScope.launch { savePlatform(platform) }
+        viewModelScope.launch {
+            savePlatform(platform)
+            showLoader(false)
+        }
     }
 
     fun setAllFavorite() {
+        showLoader(true)
         val platform = getCurrentPlatform() ?: return
         val allFavorite = platform.games.all { it.favorite == true }
         platform.games.forEach {
             it.favorite = !allFavorite
         }
-        viewModelScope.launch { savePlatform(platform) }
+        viewModelScope.launch {
+            savePlatform(platform)
+            showLoader(false)
+        }
     }
 
     fun setAllForKids() {
+        showLoader(true)
         val platform = getCurrentPlatform() ?: return
         val allForKids = platform.games.all { it.kidgame == true }
         platform.games.forEach {
             it.kidgame = !allForKids
         }
-        viewModelScope.launch { savePlatform(platform) }
+        viewModelScope.launch {
+            savePlatform(platform)
+            showLoader(false)
+        }
     }
 
     private fun showLoader(show: Boolean) {
@@ -132,9 +143,10 @@ class MainViewModel(
     }
 
     private suspend fun savePlatform(platform: Platform) {
-        provider.savePlatform(platform)
+        val source = getCurrentSource() ?: return
+        savePlatformUseCase.savePlatform(source, platform)
 
-        val platforms = provider.getPlatforms()
+        val platforms = getPlatformsUseCase.getPlatforms(source)
         val platformIndex = platforms.getPlatformIndex(platform)
 
         _stateFlow.value = stateFlow.value.copy(
@@ -175,6 +187,7 @@ class MainViewModel(
     )
 
     companion object {
+
         private const val TAG = "MainViewModel"
     }
 }

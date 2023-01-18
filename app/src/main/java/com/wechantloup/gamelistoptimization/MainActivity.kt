@@ -6,6 +6,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.DialogNavigator
@@ -24,6 +25,7 @@ import com.wechantloup.gamelistoptimization.platform.PlatformViewModelFactory
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
 import com.wechantloup.gamelistoptimization.theme.WechantTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,7 +40,7 @@ class MainActivity : AppCompatActivity() {
     private val scraper = Scraper()
 
     private val mainViewModel by viewModels<MainViewModel> {
-        MainViewModelFactory(this, provider, scraper)
+        MainViewModelFactory(this, provider)
     }
 
     private val gameViewModel by viewModels<GameViewModel> {
@@ -61,6 +63,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        lifecycleScope.launch {
+            provider.close()
+        }
+    }
+
     @Composable
     private fun NavigationHost(
         navController: NavHostController,
@@ -71,8 +80,8 @@ class MainActivity : AppCompatActivity() {
             composable(MAIN_SCREEN) {
                 MainScreen(
                     viewModel = mainViewModel,
-                    onEditPlatformClicked = { platform ->
-                        platformViewModel.setPlatform(platform)
+                    onEditPlatformClicked = { source, platform ->
+                        platformViewModel.setPlatform(source, platform)
                         navController.navigate(EDIT_PLATFORM_SCREEN)
                     },
                     onGameClicked = { source, platform, game ->

@@ -53,15 +53,13 @@ private fun EditGameScreen(
     isLoaderVisible: Boolean,
     onBackPressed: () -> Unit,
     onGameChanged: (Game) -> Unit,
-    saveGame: () -> Unit,
+    saveGame: (() -> Unit) -> Unit,
     scrapGame: () -> Unit,
 ) {
     var modified by remember { mutableStateOf(false) }
 
     val saveAndGoBack: () -> Unit = {
-        if (modified)
-            saveGame()
-        onBackPressed()
+        if (modified) saveGame(onBackPressed) else onBackPressed()
     }
 
     BackHandler {

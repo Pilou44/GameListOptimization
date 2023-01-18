@@ -14,7 +14,10 @@ import com.wechantloup.gamelistoptimization.model.Sources
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider.Companion.GAMELIST_FILE
 import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.usecase.DownloadUseCase
+import com.wechantloup.gamelistoptimization.usecase.SavePlatformUseCase
 import com.wechantloup.gamelistoptimization.usecase.ScrapGameUseCase
+import com.wechantloup.gamelistoptimization.usecase.UploadUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,15 +33,26 @@ class GameViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val savePlatformUseCase = SavePlatformUseCase(provider)
+        val downloadUseCase = DownloadUseCase(provider)
+        val uploadUseCase = UploadUseCase(provider)
         val scrapGameUseCase = ScrapGameUseCase(scraper, provider)
         @Suppress("UNCHECKED_CAST")
-        return GameViewModel(activity.application, provider, scrapGameUseCase) as T
+        return GameViewModel(
+            activity.application,
+            savePlatformUseCase,
+            downloadUseCase,
+            uploadUseCase,
+            scrapGameUseCase,
+        ) as T
     }
 }
 
 class GameViewModel(
     application: Application,
-    private val provider: GameListProvider,
+    private val savePlatformUseCase: SavePlatformUseCase,
+    private val downloadUseCase: DownloadUseCase,
+    private val uploadUseCase: UploadUseCase,
     private val scrapGameUseCase: ScrapGameUseCase,
 ) : AndroidViewModel(application) {
 
@@ -46,13 +60,6 @@ class GameViewModel(
     val stateFlow: StateFlow<State> = _stateFlow
 
     private val gameSources = Sources.values().map { it.source }.toList()
-
-    override fun onCleared() {
-        viewModelScope.launch {
-            provider.close()
-            super.onCleared()
-        }
-    }
 
     fun openGame(source: Source, platform: Platform, game: Game) {
         val currentSource = getCurrentSource()
@@ -83,7 +90,9 @@ class GameViewModel(
         _stateFlow.value = stateFlow.value.copy(game = game)
     }
 
-    fun saveGame() {
+    fun saveGame(callBack: () -> Unit) {
+        showLoader(true)
+        val source = requireNotNull(getCurrentSource())
         val game = requireNotNull(getCurrentGame())
         val currentPlatform = requireNotNull(getCurrentPlatform())
         val mutableGameList = currentPlatform.games.toMutableList()
@@ -93,7 +102,9 @@ class GameViewModel(
         val platform = currentPlatform.copy(games = mutableGameList)
 
         viewModelScope.launch {
-            provider.savePlatform(platform)
+            savePlatformUseCase.savePlatform(source, platform)
+            showLoader(false)
+            callBack()
         }
     }
 
@@ -120,28 +131,31 @@ class GameViewModel(
     }
 
     private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {
+        val source = requireNotNull(getCurrentSource())
         val game = requireNotNull(getCurrentGame())
         val platform = requireNotNull(getCurrentPlatform())
         val cacheFile = getGameFile(game)
-        val result = provider.downloadGame(game, platform, cacheFile)
-        Log.i(TAG, "File downloaded to cache success = $result")
+        val result = downloadUseCase.downloadGame(source, platform, game, cacheFile)
+        Log.i(TAG, "Download of ${game.path} success = $result")
         return@withContext cacheFile
     }
 
     private suspend fun copyGameToDest(file: File, destination: Source) {
         val platform = requireNotNull(getCurrentPlatform())
         val game = requireNotNull(getCurrentGame())
+
         val imageFile = getImageFile(
             requireNotNull(getCurrentSource()),
             platform,
             game,
         )
-        val result = provider.uploadGame(
-            game = game,
-            gameFile = file,
-            imageFile = if (imageFile.exists()) imageFile else null,
+        if (imageFile.exists()) uploadUseCase.uploadImage(destination, platform, game, imageFile)
+
+        val result = uploadUseCase.uploadGame(
+            destSource = destination,
             srcPlatform = platform,
-            destination = destination,
+            game = game,
+            src = file,
         )
         Log.i(TAG, "File upload to cache success = $result")
     }
@@ -155,7 +169,7 @@ class GameViewModel(
             return@withContext
         }
 
-        if (provider.downloadGameImage(this@retrieveImage, platform, cachedImage)) {
+        if (downloadUseCase.downloadImage(source, platform, this@retrieveImage, cachedImage)) {
             _stateFlow.value = stateFlow.value.copy(image = cachedImage.path)
         }
     }

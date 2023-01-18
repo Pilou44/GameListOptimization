@@ -20,9 +20,6 @@ import fr.arnaudguyon.xmltojsonlib.JsonToXml
 import fr.arnaudguyon.xmltojsonlib.XmlToJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
 import java.util.EnumSet
 import java.util.zip.CRC32
 import java.util.zip.CheckedInputStream
@@ -41,12 +38,12 @@ class GameListProvider {
         }
 
     suspend fun open(source: Source): Boolean = withContext(Dispatchers.IO) {
-        if (source != currentSource) {
+        if (share?.isConnected != true) {
+            share = source.connectTo()
+        } else if (source != currentSource) {
             if (share?.isConnected == true) {
                 share?.close()
             }
-            currentSource = source
-            Log.i(TAG, "Connect to ${source.name}")
             share = source.connectTo()
         }
         return@withContext share != null
@@ -114,16 +111,14 @@ class GameListProvider {
         Log.i(TAG, "Platform $platform saved")
     }
 
-    suspend fun getGameSize(game: Game, platform: Platform): Long = withContext(Dispatchers.IO) {
-        val gamePath = game.getPath(platform)
-        val info = getShare().getFileInformation(gamePath)
+    suspend fun getFileSize(path: String): Long = withContext(Dispatchers.IO) {
+        val info = getShare().getFileInformation(path)
         return@withContext info.standardInformation.endOfFile
     }
 
-    suspend fun getGameCrc(game: Game, platform: Platform): Long = withContext(Dispatchers.IO) {
-        val gamePath = game.getPath(platform)
+    suspend fun getFileCrc(path: String): Long = withContext(Dispatchers.IO) {
         val file = getShare().openFile(
-            gamePath,
+            path,
             EnumSet.of(AccessMask.GENERIC_READ),
             null,
             SMB2ShareAccess.ALL,
@@ -137,76 +132,13 @@ class GameListProvider {
                 read = cis.read()
             }
         }
+        file.close()
         return@withContext crc.value
     }
 
-    suspend fun downloadGameImage(game: Game, platform: Platform, destFile: File): Boolean =
-        withContext(Dispatchers.IO) {
-            if (game.image == null) return@withContext false
+    suspend fun getGameNamesFromPlatform(platform: Platform): List<String> = withContext(Dispatchers.IO) {
+        if (platform.extensions.isEmpty()) throw IllegalStateException("No extension in platform")
 
-            val imagePath = game.getImagePath(platform)
-            Log.d(TAG, "Image path = $imagePath")
-
-            try {
-                download(imagePath, destFile)
-                return@withContext true
-            } catch (e: Exception) {
-                Log.w(TAG, "Can't open $imagePath")
-                return@withContext false
-            }
-        }
-
-    suspend fun downloadGame(game: Game, platform: Platform, destFile: File): Boolean =
-        withContext(Dispatchers.IO) {
-            val gamePath = game.getPath(platform)
-            Log.d(TAG, "Game path = $gamePath")
-
-            download(gamePath, destFile)
-
-            return@withContext true
-        }
-
-    suspend fun uploadGame(
-        game: Game,
-        gameFile: File,
-        imageFile: File?,
-        srcPlatform: Platform,
-        destination: Source,
-    ): Boolean = withContext(Dispatchers.IO) {
-        val savedSource = currentSource
-
-        open(destination)
-
-        val destPlatform =
-            getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return@withContext false // ToDo Create platform
-
-        val gamePath = game.getPath(destPlatform)
-        Log.d(TAG, "Game path = $gamePath")
-        upload(gameFile, gamePath)
-        Log.i(TAG, "Game uploaded")
-
-        if (game.image != null && imageFile != null) {
-            val imagePath = game.getImagePath(destPlatform)
-            Log.d(TAG, "Image path = $imagePath")
-            upload(imageFile, imagePath)
-            Log.i(TAG, "Image uploaded")
-        }
-
-        val destGames = destPlatform.games.toMutableList()
-            .apply { add(game) }
-        val newPlatform = destPlatform.copy(games = destGames)
-        savePlatform(newPlatform)
-
-        if (savedSource != null) {
-            open(savedSource)
-        } else {
-            close()
-        }
-
-        return@withContext true
-    }
-
-    suspend fun cleanGameList(platform: Platform): Platform = withContext(Dispatchers.IO) {
         val directory: Directory = getShare().openDirectory(
             platform.system,
             EnumSet.of(AccessMask.FILE_LIST_DIRECTORY),
@@ -215,51 +147,10 @@ class GameListProvider {
             SMB2CreateDisposition.FILE_OPEN,
             null,
         )
-        val files = directory.list()
-        Log.d(TAG, "${files.size} files found")
 
-        val games = directory.list()
+        return@withContext directory.list()
             .filter { platform.extensions.contains(it.fileName.extension) }
             .map { it.fileName }
-        Log.d(TAG, "${games.size} games found")
-
-        val platformGames = platform.games.toMutableList()
-        Log.d(TAG, "Platform contains ${platformGames.size} games")
-        platform.games.forEach {
-            val fileName = it.path.substring(it.path.lastIndexOf("/") + 1)
-            if (!games.contains(fileName)) {
-                platformGames.remove(it)
-            }
-        }
-        Log.d(TAG, "Platform contains ${platformGames.size} games after removing missing files")
-
-        val platformGameNames = platformGames.map { it.path.substring(it.path.lastIndexOf("/") + 1) }
-        games.forEach {
-            if (!platformGameNames.contains(it)) {
-                platformGames.add(Game(
-                    id = null,
-                    source = null,
-                    path = "./$it",
-                    name = null,
-                    desc = null,
-                    rating = null,
-                    releasedate = null,
-                    developer = null,
-                    publisher = null,
-                    genre = null,
-                    players = null,
-                    image = null,
-                    marquee = null,
-                    video = null,
-                    genreid = null,
-                    favorite = null,
-                    kidgame = null,
-                    hidden = null,
-                ))
-            }
-        }
-        Log.d(TAG, "Platform contains ${platformGames.size} games after adding remaining files")
-        return@withContext platform.copy(games = platformGames)
     }
 
     private suspend fun getShare(): DiskShare {
@@ -273,45 +164,8 @@ class GameListProvider {
         return requireNotNull(share) { "Unable to reconnect" }
     }
 
-    private fun Game.getImagePath(platform: Platform): String {
-        return "${platform.system}\\$image".cleanPath()
-    }
-
-    private fun Game.getPath(platform: Platform): String {
-        return "${platform.system}\\$path".cleanPath()
-    }
-
-    private fun String.cleanPath(): String = replace("/", "\\").replace("\\.\\", "\\")
-
-    private suspend fun upload(file: File, path: String) = withContext(Dispatchers.IO) {
-        val share = getShare()
-
-        val parentPath = path.substring(0, path.lastIndexOf("\\"))
-        Log.d(TAG, "Parent path = $parentPath")
-        share.mkdirs(parentPath)
-
-        val dest = share.openFile(
-            path,
-            EnumSet.of(AccessMask.GENERIC_WRITE),
-            null,
-            SMB2ShareAccess.ALL,
-            SMB2CreateDisposition.FILE_OVERWRITE_IF,
-            null,
-        )
-        val outputStream = dest.outputStream
-        val inputStream = file.inputStream()
-
-        outputStream.use { output ->
-            inputStream.use { input ->
-                copy(input, output)
-            }
-        }
-
-        dest.close()
-    }
-
-    private suspend fun download(path: String, file: File) = withContext(Dispatchers.IO) {
-        val src = getShare().openFile(
+    suspend fun getFileForReading(path: String): com.hierynomus.smbj.share.File {
+        return getShare().openFile(
             path,
             EnumSet.of(AccessMask.GENERIC_READ),
             null,
@@ -319,20 +173,23 @@ class GameListProvider {
             SMB2CreateDisposition.FILE_OPEN,
             null
         )
-        val inputStream = src.inputStream
+    }
 
-        if (!file.exists()) {
-            file.createNewFile()
-        }
-        val outputStream = file.outputStream()
+    suspend fun getFileForWriting(path: String): com.hierynomus.smbj.share.File {
+        val share = getShare()
 
-        outputStream.use { output ->
-            inputStream.use { input ->
-                copy(input, output)
-            }
-        }
+        val parentPath = path.substring(0, path.lastIndexOf("\\"))
+        Log.d(TAG, "Parent path = $parentPath")
+        share.mkdirs(parentPath)
 
-        src.close()
+        return share.openFile(
+            path,
+            EnumSet.of(AccessMask.GENERIC_WRITE),
+            null,
+            SMB2ShareAccess.ALL,
+            SMB2CreateDisposition.FILE_OVERWRITE_IF,
+            null,
+        )
     }
 
     private fun DiskShare.mkdirs(path: String) {
@@ -358,14 +215,6 @@ class GameListProvider {
             Log.d(TAG, "$path already exists")
         } else {
             throw e
-        }
-    }
-
-    private fun copy(source: InputStream, target: OutputStream) {
-        val buf = ByteArray(8192)
-        var length: Int
-        while (source.read(buf).also { length = it } != -1) {
-            target.write(buf, 0, length)
         }
     }
 
@@ -401,6 +250,7 @@ class GameListProvider {
     }
 
     private suspend fun Source.connectTo(): DiskShare? = withContext(Dispatchers.IO) {
+        Log.i(TAG, "Connect to $name")
         var connection: Connection? = null
         var session: Session? = null
         try {
@@ -408,11 +258,13 @@ class GameListProvider {
             connection = client.connect(ip)
             val ac = AuthenticationContext(login, password.toCharArray(), "DOMAIN")
             session = connection.authenticate(ac)
+            currentSource = this@connectTo
             (session.connectShare(path) as DiskShare)
         } catch (e: Exception) {
             Log.e(TAG, "Can't connect to source", e)
             session?.close()
             connection?.close()
+            currentSource = null
             null
         }
     }

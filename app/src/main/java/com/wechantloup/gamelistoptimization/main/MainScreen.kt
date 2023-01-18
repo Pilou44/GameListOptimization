@@ -37,7 +37,7 @@ import com.wechantloup.gamelistoptimization.theme.Dimens
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    onEditPlatformClicked: (Platform) -> Unit,
+    onEditPlatformClicked: (Source, Platform) -> Unit,
     onGameClicked: (Source, Platform, Game) -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
@@ -71,7 +71,7 @@ fun MainScreen(
     onCopyBackupClicked: () -> Unit,
     onAllChildClicked: () -> Unit,
     onAllFavoriteClicked: () -> Unit,
-    onEditPlatformClicked: (Platform) -> Unit,
+    onEditPlatformClicked: (Source, Platform) -> Unit,
     onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
 ) {
     val scaffoldState = rememberScaffoldState()
@@ -104,7 +104,9 @@ fun MainScreen(
                 platforms = platforms,
                 selectedPlatformIndex = currentPlatformIndex,
                 onPlatformSelected = onPlatformSelected,
-                onEditClicked = onEditPlatformClicked,
+                onEditClicked = { platform ->
+                    currentSource?.let { onEditPlatformClicked(it, platform) }
+                },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Header(
@@ -363,7 +365,7 @@ fun MainScreenPreview() {
         onCopyBackupClicked = {},
         onAllChildClicked = {},
         onAllFavoriteClicked = {},
-        onEditPlatformClicked = {},
+        onEditPlatformClicked = { _, _ -> },
         onGameClicked = { _, _, _ -> },
     )
 }
