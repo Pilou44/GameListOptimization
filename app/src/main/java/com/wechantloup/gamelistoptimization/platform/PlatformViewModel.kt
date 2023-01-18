@@ -2,7 +2,6 @@ package com.wechantloup.gamelistoptimization.platform
 
 import android.app.Activity
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -11,6 +10,8 @@ import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.usecase.ScrapGameUseCase
+import com.wechantloup.gamelistoptimization.usecase.ScrapPlatformUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,15 +23,18 @@ class PlatformViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val scrapGameUseCase = ScrapGameUseCase(scraper, provider)
+        val scrapPlatformUseCase = ScrapPlatformUseCase(scraper)
         @Suppress("UNCHECKED_CAST")
-        return PlatformViewModel(activity.application, provider, scraper) as T
+        return PlatformViewModel(activity.application, provider, scrapGameUseCase, scrapPlatformUseCase) as T
     }
 }
 
 class PlatformViewModel(
     application: Application,
     private val provider: GameListProvider,
-    private val scraper: Scraper,
+    private val scrapGameUseCase: ScrapGameUseCase,
+    private val srapPlatformUseCase: ScrapPlatformUseCase,
 ) : AndroidViewModel(application) {
 
     private val _stateFlow = MutableStateFlow(State())
@@ -61,14 +65,7 @@ class PlatformViewModel(
         val platform = getCurrentPlatform() ?: return
         showLoader(true)
         viewModelScope.launch {
-            val updatedPlatform = scraper
-                .getPlatform(platform.system)
-                .copy(
-                    path = platform.path,
-                    games = platform.games,
-                    gamesBackup = platform.gamesBackup,
-                )
-
+            val updatedPlatform = srapPlatformUseCase.scrapPlatform(platform)
             val cleanedPlatform = provider.cleanGameList(updatedPlatform)
             _stateFlow.value = stateFlow.value.copy(platform = cleanedPlatform)
             showLoader(false)
@@ -81,38 +78,8 @@ class PlatformViewModel(
         viewModelScope.launch {
             val scrapedGames = mutableListOf<Game>()
             platform.games.forEach { game ->
-                try {
-                    val scrapedGame = scraper.scrapGame(
-                        romName = game.getRomName(),
-                        system = platform.system,
-                        fileSize = provider.getGameSize(game, platform),
-                        crc = provider.getGameCrc(game, platform),
-                    )
-                    val newGame = Game(
-                        id = scrapedGame.id ?: game.id,
-                        source = scrapedGame.source ?: game.source,
-                        path = game.path,
-                        name = scrapedGame.name ?: game.name,
-                        desc = scrapedGame.desc ?: game.desc,
-                        rating = scrapedGame.rating ?: game.rating,
-                        releasedate = scrapedGame.releasedate ?: game.releasedate,
-                        developer = scrapedGame.developer ?: game.developer,
-                        publisher = scrapedGame.publisher ?: game.publisher,
-                        genre = scrapedGame.genre ?: game.genre,
-                        players = scrapedGame.players ?: game.players,
-                        image = scrapedGame.image ?: game.image,
-                        marquee = scrapedGame.marquee ?: game.marquee,
-                        video = scrapedGame.video ?: game.video,
-                        genreid = scrapedGame.genreid ?: game.genreid,
-                        favorite = game.favorite,
-                        kidgame = game.kidgame,
-                        hidden = game.hidden,
-                    )
-                    scrapedGames.add(newGame)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to scrap ${game.path}", e)
-                    scrapedGames.add(game)
-                }
+                val newGame = scrapGameUseCase.scrapGame(game, platform)
+                scrapedGames.add(newGame)
             }
             val scrapedPlatform = platform.copy(games = scrapedGames)
             _stateFlow.value = stateFlow.value.copy(platform = scrapedPlatform)
