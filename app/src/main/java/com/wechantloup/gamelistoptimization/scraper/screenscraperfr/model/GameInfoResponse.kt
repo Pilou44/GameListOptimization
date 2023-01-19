@@ -7,10 +7,10 @@ class GameInfoResponse(
 )
 
 class Response(
-    @SerializedName("jeu") val game: Game,
+    @SerializedName("jeu") val game: ScraperGame,
 )
 
-class Game(
+class ScraperGame(
     @SerializedName("id") val id: String?,
     @SerializedName("noms") val names: List<RegionString>?,
     @SerializedName("synopsis") val synopsis: List<LanguageString>?,
@@ -21,6 +21,7 @@ class Game(
     @SerializedName("genres") val genres: List<Genre>?,
     @SerializedName("joueurs") val players: TextString?,
     @SerializedName("notgame") val unknownGame: Boolean,
+    @SerializedName("medias") val medias: List<Media>,
 )
 
 class TextString(
@@ -45,4 +46,10 @@ class RegionString(
 class LanguageString(
     @SerializedName("langue") val language: String,
     @SerializedName("text") val text: String,
+)
+
+class Media(
+    @SerializedName("type") val type: String,
+    @SerializedName("url") val url: String,
+    @SerializedName("region") val region: String,
 )
