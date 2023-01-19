@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -19,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -85,6 +87,7 @@ private fun GameScreen(
     ) { paddingValues ->
         Column(
             modifier = Modifier
+                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
                 .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
@@ -119,7 +122,9 @@ private fun GameScreen(
                 text = game?.desc ?: "",
             )
             CopyZone(
-                modifier = Modifier.align(CenterHorizontally),
+                modifier = Modifier
+                    .align(CenterHorizontally)
+                    .padding(Dimens.spacingS),
                 sources = copyDestinations,
                 onCopyClicked = onCopyClicked,
             )
@@ -152,21 +157,25 @@ private fun CopyZone(
     onCopyClicked: (Source) -> Unit,
 ) {
     var source: Source? by remember { mutableStateOf(null) }
-    Row(modifier = modifier) {
+    Row(modifier = Modifier.wrapContentWidth()) {
         Text(
-            modifier = Modifier.align(CenterVertically),
+            modifier = Modifier
+                .wrapContentWidth()
+                .alignByBaseline(),
             text = stringResource(R.string.copy_to),
         )
         Dropdown(
             modifier = Modifier
-                .align(CenterVertically)
+                .alignByBaseline()
                 .padding(start = Dimens.spacingS, end = Dimens.spacingS),
             title = stringResource(R.string.source),
             values = sources,
             onValueSelected = { source = it },
         )
         Button(
-            modifier = Modifier.align(CenterVertically),
+            modifier = Modifier
+                .wrapContentWidth()
+                .alignByBaseline(),
             enabled = sources.isNotEmpty(),
             onClick = { source?.let { onCopyClicked(it) } },
         ) {
