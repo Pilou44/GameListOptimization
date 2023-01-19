@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val platformViewModel by viewModels<PlatformViewModel> {
-        PlatformViewModelFactory(this, provider, scraper)
+        PlatformViewModelFactory(this, provider, scraper, webDownloader, cacheProvider)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
