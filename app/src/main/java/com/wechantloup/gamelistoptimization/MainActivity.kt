@@ -17,10 +17,10 @@ import com.wechantloup.gamelistoptimization.game.EditGameScreen
 import com.wechantloup.gamelistoptimization.game.GameScreen
 import com.wechantloup.gamelistoptimization.game.GameViewModel
 import com.wechantloup.gamelistoptimization.game.GameViewModelFactory
-import com.wechantloup.gamelistoptimization.platform.EditPlatformScreen
 import com.wechantloup.gamelistoptimization.main.MainScreen
 import com.wechantloup.gamelistoptimization.main.MainViewModel
 import com.wechantloup.gamelistoptimization.main.MainViewModelFactory
+import com.wechantloup.gamelistoptimization.platform.EditPlatformScreen
 import com.wechantloup.gamelistoptimization.platform.PlatformViewModel
 import com.wechantloup.gamelistoptimization.platform.PlatformViewModelFactory
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider

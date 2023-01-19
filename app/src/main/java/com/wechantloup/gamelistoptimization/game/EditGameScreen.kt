@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -20,8 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil.compose.AsyncImage
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.compose.BackButton
 import com.wechantloup.gamelistoptimization.compose.FullScreenLoader
@@ -45,7 +45,6 @@ fun EditGameScreen(
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun EditGameScreen(
     game: Game,
@@ -99,7 +98,7 @@ private fun EditGameScreen(
                     .fillMaxSize()
                     .padding(Dimens.spacingS)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth(0.6f)) {
                     TextField(
                         modifier = Modifier.padding(Dimens.spacingS),
                         value = game.name ?: game.path,
@@ -137,9 +136,8 @@ private fun EditGameScreen(
                         label = { Text(stringResource(R.string.game_desc)) },
                     )
                 }
-                GlideImage(
+                AsyncImage(
                     modifier = Modifier
-                        .weight(1f)
                         .padding(Dimens.spacingS),
                     model = image,
                     contentDescription = game.name,

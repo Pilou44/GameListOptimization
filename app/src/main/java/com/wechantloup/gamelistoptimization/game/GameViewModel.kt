@@ -13,8 +13,8 @@ import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
-import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider.Companion.GAMELIST_FILE
 import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.usecase.CacheImageUseCase
 import com.wechantloup.gamelistoptimization.usecase.DownloadUseCase
 import com.wechantloup.gamelistoptimization.usecase.SavePlatformUseCase
 import com.wechantloup.gamelistoptimization.usecase.ScrapGameUseCase
@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.URLEncoder
 
 class GameViewModelFactory(
     private val activity: Activity,
@@ -42,6 +41,7 @@ class GameViewModelFactory(
         val downloadUseCase = DownloadUseCase(provider)
         val uploadUseCase = UploadUseCase(provider, webDownloader, cacheProvider)
         val scrapGameUseCase = ScrapGameUseCase(scraper, provider)
+        val cacheImageUseCase = CacheImageUseCase(cacheProvider)
         @Suppress("UNCHECKED_CAST")
         return GameViewModel(
             activity.application,
@@ -49,6 +49,7 @@ class GameViewModelFactory(
             downloadUseCase,
             uploadUseCase,
             scrapGameUseCase,
+            cacheImageUseCase,
         ) as T
     }
 }
@@ -59,6 +60,7 @@ class GameViewModel(
     private val downloadUseCase: DownloadUseCase,
     private val uploadUseCase: UploadUseCase,
     private val scrapGameUseCase: ScrapGameUseCase,
+    private val cacheImageUseCase: CacheImageUseCase,
 ) : AndroidViewModel(application) {
 
     private val _stateFlow = MutableStateFlow(State())
@@ -105,9 +107,11 @@ class GameViewModel(
 
         viewModelScope.launch {
             val newGame = try {
+                cacheImageUseCase.removeImageFile(source, currentPlatform, game)
                 val imageUrl: ScrapGameUseCase.ImageUrl = requireNotNull(game.image).deserialize()
                 imageUrl.upload(source, currentPlatform, game)
             } catch (e: Exception) {
+                Log.e("TOTO", "Error reading scraped image", e)
                 // No scraped image
                 game
             }
@@ -116,6 +120,7 @@ class GameViewModel(
             mutableGameList.add(gameIndex, newGame)
             val platform = currentPlatform.copy(games = mutableGameList)
 
+            Log.d("TOTO", "Save game with image ${game.image}")
             savePlatformUseCase.savePlatform(source, platform)
             showLoader(false)
             callBack()
@@ -164,7 +169,8 @@ class GameViewModel(
         val imageName = "${romName.substring(0, romName.lastIndexOf("."))}.$format"
         val imagePath = "./media/images/$imageName"
         val newGame = game.copy(image = imagePath)
-        uploadUseCase.uploadImage(source, platform, newGame, url)
+        val result = uploadUseCase.uploadImage(source, platform, newGame, url)
+        Log.d("TOTO", "Upload image for ${game.name} success = $result")
         return newGame
     }
 
@@ -179,14 +185,11 @@ class GameViewModel(
     }
 
     private suspend fun copyGameToDest(file: File, destination: Source) {
+        val source = requireNotNull(getCurrentSource())
         val platform = requireNotNull(getCurrentPlatform())
         val game = requireNotNull(getCurrentGame())
 
-        val imageFile = getImageFile(
-            requireNotNull(getCurrentSource()),
-            platform,
-            game,
-        )
+        val imageFile = cacheImageUseCase.getImageFile(source, platform, game)
         if (imageFile.exists()) uploadUseCase.uploadImage(destination, platform, game, imageFile)
 
         val result = uploadUseCase.uploadGame(
@@ -199,32 +202,24 @@ class GameViewModel(
     }
 
     private suspend fun Game.retrieveImage(source: Source, platform: Platform) = withContext(Dispatchers.IO) {
+        Log.d("TOTO", "Retrieve image $image")
         if (image == null) return@withContext
 
-        val cachedImage: File = getImageFile(source, platform, this@retrieveImage)
-        if (cachedImage.exists()) {
+        val cachedImage = cacheImageUseCase.getImageFile(source, platform, this@retrieveImage)
+        if (cachedImage.exists() && cachedImage.length() > 0) {
+            Log.d("TOTO", "Cached image exists: ${cachedImage.path}")
             _stateFlow.value = stateFlow.value.copy(image = cachedImage.path)
             return@withContext
         }
 
         if (downloadUseCase.downloadImage(source, platform, this@retrieveImage, cachedImage)) {
+            Log.d("TOTO", "Download image to cache")
             _stateFlow.value = stateFlow.value.copy(image = cachedImage.path)
         }
     }
 
     private fun showLoader(show: Boolean) {
         _stateFlow.value = stateFlow.value.copy(showLoader = show)
-    }
-
-    private fun getImageFile(source: Source, platform: Platform, game: Game): File {
-        val platformPath = platform.path.substring(0, platform.path.indexOf(GAMELIST_FILE))
-        val name = URLEncoder
-            .encode("${source.ip}${source.path}$platformPath${game.path}", Charsets.UTF_8.name())
-            .replace("/", "")
-            .replace("\\", "")
-        val parent = File(getApplication<Application>().cacheDir, "images")
-        if (!parent.exists()) parent.mkdirs()
-        return File(parent, name)
     }
 
     private fun getGameFile(game: Game): File {
