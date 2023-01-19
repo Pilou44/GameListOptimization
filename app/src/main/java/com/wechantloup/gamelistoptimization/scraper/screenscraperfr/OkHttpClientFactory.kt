@@ -19,7 +19,7 @@ class OkHttpClientFactory {
         OkHttpClient.Builder()
             .addInterceptor(DevInterceptor(BuildConfig.DEBUG))
             .addInterceptor(FormatInterceptor())
-//            .addInterceptor(UserInterceptor)
+//            .addInterceptor(UserInterceptor) // ToDo
             .addNetworkInterceptor(FlipperUtils.createInterceptor())
             .build()
 

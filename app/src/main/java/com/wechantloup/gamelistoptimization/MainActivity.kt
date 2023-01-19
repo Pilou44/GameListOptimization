@@ -12,6 +12,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.game.EditGameScreen
 import com.wechantloup.gamelistoptimization.game.GameScreen
 import com.wechantloup.gamelistoptimization.game.GameViewModel
@@ -25,6 +26,7 @@ import com.wechantloup.gamelistoptimization.platform.PlatformViewModelFactory
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
 import com.wechantloup.gamelistoptimization.theme.WechantTheme
+import com.wechantloup.gamelistoptimization.webdownloader.WebDownloader
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -38,13 +40,15 @@ class MainActivity : AppCompatActivity() {
 
     private val provider = GameListProvider()
     private val scraper = Scraper()
+    private val webDownloader = WebDownloader()
+    private val cacheProvider by lazy { CacheProvider(this) }
 
     private val mainViewModel by viewModels<MainViewModel> {
         MainViewModelFactory(this, provider)
     }
 
     private val gameViewModel by viewModels<GameViewModel> {
-        GameViewModelFactory(this, provider, scraper)
+        GameViewModelFactory(this, provider, scraper, webDownloader, cacheProvider)
     }
 
     private val platformViewModel by viewModels<PlatformViewModel> {

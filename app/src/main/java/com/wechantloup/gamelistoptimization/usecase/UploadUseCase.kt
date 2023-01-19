@@ -1,6 +1,7 @@
 package com.wechantloup.gamelistoptimization.usecase
 
 import android.util.Log
+import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
@@ -8,11 +9,16 @@ import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.utils.copy
 import com.wechantloup.gamelistoptimization.utils.getImagePath
 import com.wechantloup.gamelistoptimization.utils.getPath
+import com.wechantloup.gamelistoptimization.webdownloader.WebDownloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class UploadUseCase(private val provider: GameListProvider) {
+class UploadUseCase(
+    private val provider: GameListProvider,
+    private val webDownloader: WebDownloader,
+    private val cacheProvider: CacheProvider,
+) {
 
     suspend fun uploadGame(destSource: Source, srcPlatform: Platform, game: Game, src: File): Boolean {
         provider.open(destSource)
@@ -41,6 +47,22 @@ class UploadUseCase(private val provider: GameListProvider) {
             provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return false // ToDo Create platform
         val imagePath = game.getImagePath(destPlatform)
         return upload(src, imagePath)
+    }
+
+    suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, url: String): Boolean {
+        if (game.image == null) return false
+
+        val parent = cacheProvider.getTempDir()
+        if (!parent.exists()) parent.mkdirs()
+        val cachedImage = File(parent, "tmp")
+
+        withContext(Dispatchers.IO) {
+            if (!cachedImage.exists()) cachedImage.createNewFile()
+            cachedImage.deleteOnExit()
+            webDownloader.download(url, cachedImage)
+        }
+
+        return uploadImage(destSource, srcPlatform, game, cachedImage)
     }
 
     suspend fun upload(

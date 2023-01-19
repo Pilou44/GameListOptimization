@@ -52,4 +52,5 @@ class Media(
     @SerializedName("type") val type: String,
     @SerializedName("url") val url: String,
     @SerializedName("region") val region: String,
+    @SerializedName("format") val format: String,
 )

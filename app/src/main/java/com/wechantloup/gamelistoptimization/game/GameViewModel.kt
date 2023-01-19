@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
@@ -18,6 +19,8 @@ import com.wechantloup.gamelistoptimization.usecase.DownloadUseCase
 import com.wechantloup.gamelistoptimization.usecase.SavePlatformUseCase
 import com.wechantloup.gamelistoptimization.usecase.ScrapGameUseCase
 import com.wechantloup.gamelistoptimization.usecase.UploadUseCase
+import com.wechantloup.gamelistoptimization.utils.deserialize
+import com.wechantloup.gamelistoptimization.webdownloader.WebDownloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,12 +33,14 @@ class GameViewModelFactory(
     private val activity: Activity,
     private val provider: GameListProvider,
     private val scraper: Scraper,
+    private val webDownloader: WebDownloader,
+    private val cacheProvider: CacheProvider,
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val savePlatformUseCase = SavePlatformUseCase(provider)
         val downloadUseCase = DownloadUseCase(provider)
-        val uploadUseCase = UploadUseCase(provider)
+        val uploadUseCase = UploadUseCase(provider, webDownloader, cacheProvider)
         val scrapGameUseCase = ScrapGameUseCase(scraper, provider)
         @Suppress("UNCHECKED_CAST")
         return GameViewModel(
@@ -97,11 +102,20 @@ class GameViewModel(
         val currentPlatform = requireNotNull(getCurrentPlatform())
         val mutableGameList = currentPlatform.games.toMutableList()
         val gameIndex = mutableGameList.indexOfFirst { it.path == game.path }
-        mutableGameList.removeAt(gameIndex)
-        mutableGameList.add(gameIndex, game)
-        val platform = currentPlatform.copy(games = mutableGameList)
 
         viewModelScope.launch {
+            val newGame = try {
+                val imageUrl: ScrapGameUseCase.ImageUrl = requireNotNull(game.image).deserialize()
+                imageUrl.upload(source, currentPlatform, game)
+            } catch (e: Exception) {
+                // No scraped image
+                game
+            }
+
+            mutableGameList.removeAt(gameIndex)
+            mutableGameList.add(gameIndex, newGame)
+            val platform = currentPlatform.copy(games = mutableGameList)
+
             savePlatformUseCase.savePlatform(source, platform)
             showLoader(false)
             callBack()
@@ -124,10 +138,34 @@ class GameViewModel(
             val game = requireNotNull(getCurrentGame())
             val platform = requireNotNull(getCurrentPlatform())
             val newGame = scrapGameUseCase.scrapGame(game, platform)
+
+            try {
+                val imageUrl: ScrapGameUseCase.ImageUrl? = newGame.image?.deserialize()
+
+                imageUrl?.let {
+                    _stateFlow.value = stateFlow.value.copy(image = it.url)
+                }
+            } catch (e: Exception) {
+                // No scraped image
+            }
+
             Log.i(TAG, "Set new scraper info for ${newGame.name}")
             _stateFlow.value = stateFlow.value.copy(game = newGame)
             showLoader(false)
         }
+    }
+
+    private suspend fun ScrapGameUseCase.ImageUrl.upload(
+        source: Source,
+        platform: Platform,
+        game: Game,
+    ): Game {
+        val romName = game.getRomName()
+        val imageName = "${romName.substring(0, romName.lastIndexOf("."))}.$format"
+        val imagePath = "./media/images/$imageName"
+        val newGame = game.copy(image = imagePath)
+        uploadUseCase.uploadImage(source, platform, newGame, url)
+        return newGame
     }
 
     private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {
