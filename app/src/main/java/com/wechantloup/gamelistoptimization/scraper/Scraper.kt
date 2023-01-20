@@ -17,11 +17,11 @@ class Scraper {
         romName: String,
         system: String,
         fileSize: Long,
-        crc: Long,
+        crc: String,
     ): ScraperGame = withContext(Dispatchers.IO) {
         val systemId = getSystem(system).id
         val info = scraper.getGameInfo(
-            crcHexa = crc.toHexString(),
+            crcHexa = crc,
             romName = romName,
             romSize = fileSize,
             systemId = systemId,

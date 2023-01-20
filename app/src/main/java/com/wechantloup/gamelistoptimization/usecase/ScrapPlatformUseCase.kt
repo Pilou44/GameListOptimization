@@ -28,6 +28,7 @@ class ScrapPlatformUseCase(private val scraper: Scraper) {
 
     private fun ScraperSystem.toPlatform(system: String): Platform {
         val userCountry = Locale.getDefault().country.lowercase()
+        // ToDo Region should come from platform
         val name = if (userCountry.isEuCountry() && euName != null) euName else usName
         return Platform(
             name = name ?: system,

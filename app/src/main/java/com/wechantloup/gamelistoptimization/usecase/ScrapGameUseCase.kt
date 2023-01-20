@@ -10,8 +10,8 @@ import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.Langua
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.RegionString
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.ScraperGame
 import com.wechantloup.gamelistoptimization.utils.getPath
-import com.wechantloup.gamelistoptimization.utils.isEuCountry
 import com.wechantloup.gamelistoptimization.utils.serialize
+import okhttp3.internal.toHexString
 import java.util.Locale
 
 class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameListProvider) {
@@ -19,13 +19,14 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
     suspend fun scrapGame(game: Game, platform: Platform): Game {
         val romName = game.getRomName()
         val gamePath = game.getPath(platform)
+        val crc = provider.getFileCrc(gamePath).toHexString()
 
         val scraperGame = try {
             scraper.scrapGame(
                 romName = romName,
                 system = platform.system,
                 fileSize = provider.getFileSize(gamePath),
-                crc = provider.getFileCrc(gamePath),
+                crc = crc,
             )
         } catch (e: Exception) {
             Log.e(TAG, "Unable to scrap ${game.getRomName()}", e)
@@ -36,7 +37,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             }
         }
 
-        val scrapedGame = scraperGame.toGame(romName)
+        val scrapedGame = scraperGame.toGame(romName, crc)
 
         return Game(
             id = scrapedGame.id ?: game.id,
@@ -67,7 +68,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         )
     }
 
-    private fun ScraperGame.toGame(romName: String): Game {
+    private fun ScraperGame.toGame(romName: String, crc: String): Game {
         if (unknownGame) {
             throw UnknownGameException("Unknown game $romName")
         }
@@ -76,20 +77,20 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             id = id,
             source = "ScreenScraper.fr",
             path = "./$romName",
-            name = names?.extractFromRegion(),
+            name = names?.extractFromRegion(this, romName, crc),
             desc = synopsis?.extractFromLanguage(),
             rating = rating?.text, // ToDo
-            releaseDate = dates?.extractFromRegion(),
+            releaseDate = dates?.extractFromRegion(this, romName, crc),
             developer = developer?.text,
             publisher = publisher?.text,
             genre = genres?.map { it.names.extractFromLanguage() }?.joinToString { ", " },
             players = players?.text,
             genreId = genres?.first()?.id,
-            image = extractImage().serialize()
+            image = extractImage(romName, crc).serialize()
         )
     }
 
-    private fun ScraperGame.extractImage(): ImageUrl? {
+    private fun ScraperGame.extractImage(romName: String, crc: String): ImageUrl? {
         val images = medias.filter { it.type == MEDIA_BOX_2D }
 
         if (images.isEmpty()) {
@@ -98,21 +99,20 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             return ImageUrl(format = images[0].format, url = images[0].url)
         }
 
-        // ToDo Region should come from ROM
-        val userCountry = Locale.getDefault().country.lowercase()
-        return images.firstOrNull { it.region == userCountry }?.let { ImageUrl(format = it.format, url = it.url) }
-            ?: images.firstOrNull { userCountry.isEuCountry() && it.region == "eu" }?.let { ImageUrl(format = it.format, url = it.url) }
-            ?: images.firstOrNull { it.region == "wor" }?.let { ImageUrl(format = it.format, url = it.url) }
-            ?: images.firstOrNull()?.let { ImageUrl(format = it.format, url = it.url) }
+        val regions = extractRegions(romName, crc) ?: return null
+        return images.firstOrNull { it.region == regions.first() }?.let { ImageUrl(format = it.format, url = it.url) }
+            ?: images.firstOrNull { regions.contains(it.region) }?.let { ImageUrl(format = it.format, url = it.url) }
     }
 
-    private fun List<RegionString>.extractFromRegion(): String? {
-        // ToDo Region should come from ROM
-        val userCountry = Locale.getDefault().country.lowercase()
-        return firstOrNull { it.region == userCountry }?.text
-            ?: firstOrNull { userCountry.isEuCountry() && it.region == "eu" }?.text
-            ?: firstOrNull { it.region == "wor" }?.text
-            ?: firstOrNull()?.text
+    private fun ScraperGame.extractRegions(romName: String, crc: String): List<String>? {
+        val rom = roms.firstOrNull { it.crc == crc } ?: roms.firstOrNull { it.fileName == romName } ?: return null
+        return rom.regions.shortNames
+    }
+
+    private fun List<RegionString>.extractFromRegion(game: ScraperGame, romName: String, crc: String): String? {
+        val regions = game.extractRegions(romName, crc) ?: return null
+        return firstOrNull { it.region == regions.first() }?.text
+            ?: firstOrNull { regions.contains(it.region) }?.text
     }
 
     private fun List<LanguageString>.extractFromLanguage(): String? {

@@ -22,6 +22,17 @@ class ScraperGame(
     @SerializedName("joueurs") val players: TextString?,
     @SerializedName("notgame") val unknownGame: Boolean,
     @SerializedName("medias") val medias: List<Media>,
+    @SerializedName("roms") val roms: List<Rom>
+)
+
+class Rom(
+    @SerializedName("romfilename") val fileName: String?,
+    @SerializedName("romcrc") val crc: String?,
+    @SerializedName("regions") val regions: Region,
+)
+
+class Region(
+    @SerializedName("regions_shortname") val shortNames: List<String>,
 )
 
 class TextString(
