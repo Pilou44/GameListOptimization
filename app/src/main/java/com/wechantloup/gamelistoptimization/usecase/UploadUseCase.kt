@@ -53,7 +53,7 @@ class UploadUseCase(
         if (game.image == null) return false
         provider.open(destSource)
         val destPlatform =
-            provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return false // ToDo Create platform
+            provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: createPlatform(srcPlatform)
         val imagePath = game.getImagePath(destPlatform)
         return upload(src, imagePath)
     }
