@@ -24,7 +24,7 @@ class UploadUseCase(
         provider.open(destSource)
 
         val destPlatform =
-            provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: return false // ToDo Create platform
+            provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: createPlatform(srcPlatform)
 
         val gamePath = game.getPath(destPlatform)
 
@@ -38,6 +38,15 @@ class UploadUseCase(
         provider.savePlatform(newPlatform)
 
         return true
+    }
+
+    private suspend fun createPlatform(platform: Platform): Platform {
+        val newPlatform = platform.copy(
+            games = emptyList(),
+            gamesBackup = emptyList(),
+        )
+        provider.createPlatform(newPlatform)
+        return newPlatform
     }
 
     suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, src: File): Boolean {

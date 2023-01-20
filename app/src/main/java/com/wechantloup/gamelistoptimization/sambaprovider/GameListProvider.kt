@@ -82,6 +82,14 @@ class GameListProvider {
         platforms.sortedBy { it.toString() }
     }
 
+    suspend fun createPlatform(platform: Platform) = withContext(Dispatchers.IO) {
+        val share = getShare()
+        share.mkdirs(platform.system)
+        val file = getFileForWriting(platform.path)
+        file.close()
+        savePlatform(platform)
+    }
+
     suspend fun savePlatform(platform: Platform) = withContext(Dispatchers.IO) {
         val holder = platform.toGameListHolder()
         val path = platform.path
