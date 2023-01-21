@@ -73,7 +73,7 @@ class GameListProvider {
                             gamesBackup = gameListBackup?.games?.map { it.toGame() },
                             path = filePath,
                             system = folderName,
-                            extensions = it.extensions ?: emptyList(),
+                            extensions = it.provider?.extensions?.split(EXTENSION_SEPARATOR) ?: emptyList(),
                         )
                     )
                 }
@@ -333,14 +333,14 @@ class GameListProvider {
         val games = games.map { it.toGameListGame() }
         val provider = Provider(
             system = name,
-            software = null,
-            database = null,
-            web = null,
+            software = null, // ToDo
+            database = null, // ToDo
+            web = null, // ToDo
+            extensions = extensions.joinToString(EXTENSION_SEPARATOR),
         )
         val gameList = GameList(
             games = games,
             provider = provider,
-            extensions = extensions,
         )
         return GameListHolder(gameList)
     }
@@ -351,5 +351,6 @@ class GameListProvider {
 
         const val GAMELIST_FILE = "gamelist.xml"
         private const val GAMELIST_BACKUP_FILE = "gamelist.backup.xml"
+        private const val EXTENSION_SEPARATOR = ","
     }
 }
