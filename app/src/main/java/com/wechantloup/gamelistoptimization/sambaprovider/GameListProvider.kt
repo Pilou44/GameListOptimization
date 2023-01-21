@@ -69,11 +69,11 @@ class GameListProvider {
                     platforms.add(
                         Platform(
                             name = it.provider?.system ?: folderName,
-                            games = it.games.map { it.toGame() },
+                            games = it.games?.map { it.toGame() } ?: emptyList(),
                             gamesBackup = gameListBackup?.games?.map { it.toGame() },
                             path = filePath,
                             system = folderName,
-                            extensions = it.extensions,
+                            extensions = it.extensions ?: emptyList(),
                         )
                     )
                 }
