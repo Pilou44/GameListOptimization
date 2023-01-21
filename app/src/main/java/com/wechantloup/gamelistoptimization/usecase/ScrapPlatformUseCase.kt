@@ -4,7 +4,9 @@ import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.scraper.Scraper
 import com.wechantloup.gamelistoptimization.scraper.model.ScraperSystem
-import com.wechantloup.gamelistoptimization.utils.isEuCountry
+import com.wechantloup.gamelistoptimization.utils.isEuRegion
+import com.wechantloup.gamelistoptimization.utils.isJpRegion
+import com.wechantloup.gamelistoptimization.utils.isUsRegion
 import java.util.Locale
 
 class ScrapPlatformUseCase(private val scraper: Scraper) {
@@ -28,8 +30,15 @@ class ScrapPlatformUseCase(private val scraper: Scraper) {
 
     private fun ScraperSystem.toPlatform(system: String): Platform {
         val userCountry = Locale.getDefault().country.lowercase()
-        // ToDo Region should come from platform
-        val name = if (userCountry.isEuCountry() && euName != null) euName else usName
+        val name = if (userCountry.isEuRegion() && euName != null) {
+            euName
+        } else if (userCountry.isUsRegion() && usName != null) {
+            usName
+        } else if (userCountry.isJpRegion() && jpName != null) {
+            jpName
+        } else {
+            euName ?: usName ?: jpName
+        }
         return Platform(
             name = name ?: system,
             games = emptyList(),

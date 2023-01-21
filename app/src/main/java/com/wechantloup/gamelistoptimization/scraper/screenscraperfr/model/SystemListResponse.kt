@@ -18,6 +18,7 @@ class SystemListResponse(
     class Names(
         @SerializedName("nom_eu") val euName: String?,
         @SerializedName("nom_us") val usName: String?,
+        @SerializedName("nom_jp") val jpName: String?,
         @SerializedName("nom_retropie") val retropieName: String?,
     )
 }

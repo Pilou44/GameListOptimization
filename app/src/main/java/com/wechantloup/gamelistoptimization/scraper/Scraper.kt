@@ -6,7 +6,6 @@ import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.Scrape
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.SystemListResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.internal.toHexString
 
 class Scraper {
 
@@ -54,6 +53,7 @@ class Scraper {
                 id = id,
                 euName = names?.euName,
                 usName = names?.usName,
+                jpName = names?.jpName,
                 systemNames = names?.retropieName?.split(',') ?: emptyList(),
                 extensions = extensions?.split(',') ?: emptyList(),
             )
