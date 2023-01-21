@@ -12,6 +12,7 @@ data class GameListHolder(
 data class GameList(
     @SerializedName("provider") val provider: Provider?,
     @SerializedName("game") val games: List<GameListGame>,
+    @SerializedName("extension") val extensions: List<String>,
 )
 
 @Keep

@@ -73,7 +73,7 @@ class GameListProvider {
                             gamesBackup = gameListBackup?.games?.map { it.toGame() },
                             path = filePath,
                             system = folderName,
-                            extensions = emptyList() // ToDo
+                            extensions = it.extensions,
                         )
                     )
                 }
@@ -340,6 +340,7 @@ class GameListProvider {
         val gameList = GameList(
             games = games,
             provider = provider,
+            extensions = extensions,
         )
         return GameListHolder(gameList)
     }
