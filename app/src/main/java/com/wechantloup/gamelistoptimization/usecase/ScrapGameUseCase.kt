@@ -21,13 +21,14 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         val gamePath = game.getPath(platform)
         val crc = provider.getFileCrc(gamePath).toHexString()
 
-        val scraperGame = try {
-            scraper.scrapGame(
+        val scrapedGame = try {
+            val scrap = scraper.scrapGame(
                 romName = romName,
                 system = platform.system,
                 fileSize = provider.getFileSize(gamePath),
                 crc = crc,
             )
+            scrap.toGame(romName, crc)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to scrap ${game.getRomName()}", e)
             if (game.name.isNullOrBlank() || game.name.contains(romName)) {
@@ -36,8 +37,6 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
                 return game
             }
         }
-
-        val scrapedGame = scraperGame.toGame(romName, crc)
 
         return Game(
             id = scrapedGame.id ?: game.id,

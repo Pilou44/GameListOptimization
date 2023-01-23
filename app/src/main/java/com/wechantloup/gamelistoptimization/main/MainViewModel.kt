@@ -47,9 +47,17 @@ class MainViewModel(
 
     fun refresh() {
         viewModelScope.launch {
+            val currentPlatform = getCurrentPlatform()
             val source = requireNotNull(getCurrentSource())
+            val platforms = getPlatformsUseCase.getPlatforms(source)
+            val currentPlatformIndex = if (currentPlatform == null) {
+                -1
+            } else {
+                platforms.indexOfFirst { it.isSameAs(currentPlatform) }
+            }
             _stateFlow.value = stateFlow.value.copy(
-                platforms = getPlatformsUseCase.getPlatforms(source),
+                platforms = platforms,
+                currentPlatformIndex = currentPlatformIndex,
             )
         }
     }
