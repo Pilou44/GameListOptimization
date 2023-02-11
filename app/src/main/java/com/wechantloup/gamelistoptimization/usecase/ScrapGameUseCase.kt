@@ -29,7 +29,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
                 crc = crc,
             )
             scrap.toGame(romName, crc)
-        } catch (e: Exception) {
+        } catch (e: Exception) { // ToDo Catch 429 leecher
             Log.e(TAG, "Unable to scrap ${game.getRomName()}", e)
             if (game.name.isNullOrBlank() || game.name.contains(romName)) {
                 return unknownGame(romName)

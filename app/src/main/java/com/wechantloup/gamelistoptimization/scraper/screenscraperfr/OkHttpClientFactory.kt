@@ -1,6 +1,7 @@
 package com.wechantloup.gamelistoptimization.scraper.screenscraperfr
 
 import com.wechantloup.gamelistoptimization.BuildConfig
+import com.wechantloup.gamelistoptimization.usecase.AccountUseCase
 import com.wechantloup.gamelistoptimization.utils.FlipperUtils
 import okhttp3.OkHttpClient
 import retrofit2.Converter
@@ -9,17 +10,17 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class OkHttpClientFactory {
 
-    fun createScreenScraperFr() = createService(
+    fun createScreenScraperFr(accountUseCase: AccountUseCase) = createService(
         baseUrl = "https://www.screenscraper.fr/api2/",
         serviceClass = ScreenScraperFrService::class.java,
-        client = createClient(),
+        client = createClient(accountUseCase),
     )
 
-    private fun createClient(): OkHttpClient =
+    private fun createClient(accountUseCase: AccountUseCase): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(DevInterceptor(BuildConfig.DEBUG))
             .addInterceptor(FormatInterceptor())
-//            .addInterceptor(UserInterceptor) // ToDo
+            .addInterceptor(UserInterceptor(accountUseCase)) // ToDo
             .addNetworkInterceptor(FlipperUtils.createInterceptor())
             .build()
 

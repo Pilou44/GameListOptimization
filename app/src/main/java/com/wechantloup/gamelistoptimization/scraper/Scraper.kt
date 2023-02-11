@@ -1,15 +1,18 @@
 package com.wechantloup.gamelistoptimization.scraper
 
+import com.wechantloup.gamelistoptimization.PreferencesRepository
 import com.wechantloup.gamelistoptimization.scraper.model.ScraperSystem
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.OkHttpClientFactory
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.ScraperGame
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.SystemListResponse
+import com.wechantloup.gamelistoptimization.usecase.AccountUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class Scraper {
+class Scraper(preferencesRepository: PreferencesRepository) {
 
-    private val scraper = OkHttpClientFactory().createScreenScraperFr()
+    private val accountUseCase = AccountUseCase(preferencesRepository)
+    private val scraper = OkHttpClientFactory().createScreenScraperFr(accountUseCase)
     private var systems: List<ScraperSystem>? = null
 
     suspend fun scrapGame(

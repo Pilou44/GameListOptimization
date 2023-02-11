@@ -25,6 +25,9 @@ import com.wechantloup.gamelistoptimization.platform.PlatformViewModel
 import com.wechantloup.gamelistoptimization.platform.PlatformViewModelFactory
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.settings.SettingsScreen
+import com.wechantloup.gamelistoptimization.settings.SettingsViewModel
+import com.wechantloup.gamelistoptimization.settings.SettingsViewModelFactory
 import com.wechantloup.gamelistoptimization.theme.WechantTheme
 import com.wechantloup.gamelistoptimization.webdownloader.WebDownloader
 import kotlinx.coroutines.launch
@@ -38,8 +41,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val preferencesRepository by lazy { PreferencesRepository(this) }
     private val provider = GameListProvider()
-    private val scraper = Scraper()
+    private val scraper by lazy { Scraper(preferencesRepository) }
     private val webDownloader = WebDownloader()
     private val cacheProvider by lazy { CacheProvider(this) }
 
@@ -53,6 +57,10 @@ class MainActivity : AppCompatActivity() {
 
     private val platformViewModel by viewModels<PlatformViewModel> {
         PlatformViewModelFactory(this, provider, scraper, webDownloader, cacheProvider)
+    }
+
+    private val settingsViewModel by viewModels<SettingsViewModel> {
+        SettingsViewModelFactory(this, preferencesRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,6 +132,13 @@ class MainActivity : AppCompatActivity() {
                     onBackPressed = { navController.popBackStack(route = GAME_SCREEN, inclusive = false) },
                 )
             }
+
+            composable(SETTINGS_GAME_SCREEN) {
+                SettingsScreen(
+                    viewModel = settingsViewModel,
+                    onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) },
+                )
+            }
         }
     }
 
@@ -136,5 +151,6 @@ class MainActivity : AppCompatActivity() {
         private const val EDIT_PLATFORM_SCREEN = "edit_platform_screen"
         private const val GAME_SCREEN = "game_screen"
         private const val EDIT_GAME_SCREEN = "edit_game_screen"
+        private const val SETTINGS_GAME_SCREEN = "settings_game_screen"
     }
 }
