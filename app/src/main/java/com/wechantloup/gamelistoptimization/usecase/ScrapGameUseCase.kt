@@ -99,8 +99,12 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         }
 
         val regions = extractRegions(romName, crc) ?: return null
-        return images.firstOrNull { it.region == regions.first() }?.let { ImageUrl(format = it.format, url = it.url) }
-            ?: images.firstOrNull { regions.contains(it.region) }?.let { ImageUrl(format = it.format, url = it.url) }
+        val image = images.firstOrNull { it.region == regions.first() }
+            ?: images.firstOrNull { regions.contains(it.region) }
+            ?: images.firstOrNull().takeIf { regions.contains(REGION_WORLD) }
+            ?: return null
+
+        return ImageUrl(format = image.format, url = image.url)
     }
 
     private fun ScraperGame.extractRegions(romName: String, crc: String): List<String>? {
@@ -110,8 +114,12 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
 
     private fun List<RegionString>.extractFromRegion(game: ScraperGame, romName: String, crc: String): String? {
         val regions = game.extractRegions(romName, crc) ?: return null
-        return firstOrNull { it.region == regions.first() }?.text
-            ?: firstOrNull { regions.contains(it.region) }?.text
+        val regionString = firstOrNull { it.region == regions.first() }
+            ?: firstOrNull { regions.contains(it.region) }
+            ?: firstOrNull().takeIf { regions.contains(REGION_WORLD) }
+            ?: return null
+
+        return regionString.text
     }
 
     private fun List<LanguageString>.extractFromLanguage(): String? {
@@ -132,5 +140,6 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         private val DEFAULT_LANGUAGE = Locale.ENGLISH.language
 
         private const val MEDIA_BOX_2D = "box-2D"
+        private const val REGION_WORLD = "wor"
     }
 }
