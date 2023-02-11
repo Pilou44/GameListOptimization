@@ -104,7 +104,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
     }
 
     private fun ScraperGame.extractRegions(romName: String, crc: String): List<String>? {
-        val rom = roms.firstOrNull { it.crc == crc } ?: roms.firstOrNull { it.fileName == romName } ?: return null
+        val rom = roms.firstOrNull { it.crc?.uppercase() == crc.uppercase() } ?: roms.firstOrNull { it.fileName == romName } ?: return null
         return rom.regions.shortNames
     }
 
