@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -45,8 +45,8 @@ private fun SettingsScreen(
     onBackPressed: () -> Unit,
 ) {
     var modified by remember { mutableStateOf(false) }
-    var newLogin: String = login
-    var newPassword: String = password
+    var newLogin by remember { mutableStateOf(login) }
+    var newPassword by remember { mutableStateOf(password) }
     val scaffoldState = rememberScaffoldState()
 
     val saveAndGoBack: () -> Unit = {
@@ -78,18 +78,18 @@ private fun SettingsScreen(
                 .padding(paddingValues)
         ) {
             Text(text = "ScreenScraper Account")
-            TextField(
+            OutlinedTextField(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                value = login,
+                value = newLogin,
                 onValueChange = {
                     modified = true
                     newLogin = it
                 },
                 label = { Text("Login") }
             )
-            TextField(
+            OutlinedTextField(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                value = password,
+                value = newPassword,
                 onValueChange = {
                     modified = true
                     newPassword = it

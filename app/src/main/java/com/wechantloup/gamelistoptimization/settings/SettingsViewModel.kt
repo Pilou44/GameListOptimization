@@ -33,7 +33,7 @@ class SettingsViewModel(
     private val _stateFlow = MutableStateFlow(State())
     val stateFlow: StateFlow<State> = _stateFlow
 
-    init {
+    fun reload() {
         val (login, password) = accountUseCase.getAccount()
         _stateFlow.value = stateFlow.value.copy(login = login, password = password)
     }

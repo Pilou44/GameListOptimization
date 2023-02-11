@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.ExperimentalMaterialApi
@@ -39,6 +40,7 @@ fun MainScreen(
     viewModel: MainViewModel,
     onEditPlatformClicked: (Source, Platform) -> Unit,
     onGameClicked: (Source, Platform, Game) -> Unit,
+    openSettings: () -> Unit,
 ) {
     val state = viewModel.stateFlow.collectAsState()
     MainScreen(
@@ -54,6 +56,7 @@ fun MainScreen(
         onAllChildClicked = viewModel::setAllForKids,
         onAllFavoriteClicked = viewModel::setAllFavorite,
         onEditPlatformClicked = onEditPlatformClicked,
+        openSettings = openSettings,
         onGameClicked = onGameClicked,
     )
 }
@@ -73,6 +76,7 @@ fun MainScreen(
     onAllFavoriteClicked: () -> Unit,
     onEditPlatformClicked: (Source, Platform) -> Unit,
     onGameClicked: (serializedSource: Source, platform: Platform, game: Game) -> Unit,
+    openSettings: () -> Unit,
 ) {
     val scaffoldState = rememberScaffoldState()
     Scaffold(
@@ -85,6 +89,11 @@ fun MainScreen(
                     )
                 },
                 backgroundColor = MaterialTheme.colors.surface,
+                actions = {
+                    Button(onClick = openSettings) {
+                        Text(text = "Settings")
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -367,5 +376,6 @@ fun MainScreenPreview() {
         onAllFavoriteClicked = {},
         onEditPlatformClicked = { _, _ -> },
         onGameClicked = { _, _, _ -> },
+        openSettings = {},
     )
 }

@@ -100,6 +100,9 @@ class MainActivity : AppCompatActivity() {
                         gameViewModel.openGame(source, platform, game)
                         navController.navigate(GAME_SCREEN)
                     },
+                    openSettings = {
+                        navController.navigate(SETTINGS_SCREEN)
+                    }
                 )
             }
 
@@ -133,7 +136,8 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            composable(SETTINGS_GAME_SCREEN) {
+            composable(SETTINGS_SCREEN) {
+                settingsViewModel.reload()
                 SettingsScreen(
                     viewModel = settingsViewModel,
                     onBackPressed = { navController.popBackStack(route = MAIN_SCREEN, inclusive = false) },
@@ -151,6 +155,6 @@ class MainActivity : AppCompatActivity() {
         private const val EDIT_PLATFORM_SCREEN = "edit_platform_screen"
         private const val GAME_SCREEN = "game_screen"
         private const val EDIT_GAME_SCREEN = "edit_game_screen"
-        private const val SETTINGS_GAME_SCREEN = "settings_game_screen"
+        private const val SETTINGS_SCREEN = "settings_screen"
     }
 }
