@@ -9,3 +9,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "GameListOptimization"
 include ':app'
+include ':sketch'

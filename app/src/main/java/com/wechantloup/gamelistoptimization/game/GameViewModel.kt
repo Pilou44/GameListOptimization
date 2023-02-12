@@ -21,6 +21,7 @@ import com.wechantloup.gamelistoptimization.usecase.ScrapGameUseCase
 import com.wechantloup.gamelistoptimization.usecase.UploadUseCase
 import com.wechantloup.gamelistoptimization.utils.deserialize
 import com.wechantloup.gamelistoptimization.webdownloader.WebDownloader
+import com.wechantloup.sketch.Sketch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -90,7 +91,16 @@ class GameViewModel(
             copyDestinations = gameSources - source)
         viewModelScope.launch {
             game.retrieveImage(source, platform)
+            testSketch(source, platform, game)
         }
+    }
+
+    private suspend fun testSketch(source: Source, platform: Platform, game: Game) = withContext(Dispatchers.IO) {
+        val image = cacheImageUseCase.getImageFile(source, platform, game)
+        val sketch = Sketch(getApplication(), 800, 600)
+        sketch.drawImage(image.absolutePath, 0, 0, 800, 600)
+        val output = File(getApplication<Application>().cacheDir, "test.png")
+        sketch.save(output.absolutePath)
     }
 
     fun onGameChanged(game: Game) {

@@ -69,7 +69,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
 
     private fun ScraperGame.toGame(romName: String, crc: String): Game {
         if (unknownGame) {
-            throw UnknownGameException("Unknown game $romName")
+            throw Exception("Unknown game $romName")
         }
 
         return Game(
