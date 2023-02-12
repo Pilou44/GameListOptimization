@@ -5,14 +5,14 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.wechantloup.gamelistoptimization.PreferencesRepository
+import com.wechantloup.gamelistoptimization.data.AccountRepository
 import com.wechantloup.gamelistoptimization.usecase.AccountUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class SettingsViewModelFactory(
     private val activity: Activity,
-    private val repo: PreferencesRepository,
+    private val repo: AccountRepository,
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

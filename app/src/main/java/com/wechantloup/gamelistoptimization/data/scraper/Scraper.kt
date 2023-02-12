@@ -1,19 +1,18 @@
 package com.wechantloup.gamelistoptimization.data.scraper
 
-import com.wechantloup.gamelistoptimization.PreferencesRepository
 import com.wechantloup.gamelistoptimization.data.scraper.model.ScraperSystem
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.OkHttpClientFactory
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.ScraperGame
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.SystemListResponse
-import com.wechantloup.gamelistoptimization.usecase.AccountUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
-class Scraper(preferencesRepository: PreferencesRepository) {
+class Scraper(
+    getAccount: () -> Pair<String, String>,
+) {
 
-    private val accountUseCase = AccountUseCase(preferencesRepository)
-    private val scraper = OkHttpClientFactory().createScreenScraperFr(accountUseCase)
+    private val scraper = OkHttpClientFactory().createScreenScraperFr(getAccount)
     private var systems: List<ScraperSystem>? = null
 
     suspend fun scrapGame(

@@ -12,6 +12,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.wechantloup.gamelistoptimization.data.AccountRepository
 import com.wechantloup.gamelistoptimization.data.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.ui.game.EditGameScreen
 import com.wechantloup.gamelistoptimization.ui.game.GameScreen
@@ -41,10 +42,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val preferencesRepository by lazy { PreferencesRepository(this) }
-    private val provider = GameListProvider()
-    private val scraper by lazy { Scraper(preferencesRepository) }
-    private val webDownloader = WebDownloader()
+    private val accountRepository by lazy { AccountRepository(this) }
+    private val provider by lazy { GameListProvider() }
+    private val scraper by lazy { Scraper(accountRepository::getAccount) }
+    private val webDownloader by lazy { WebDownloader() }
     private val cacheProvider by lazy { CacheProvider(this) }
 
     private val mainViewModel by viewModels<MainViewModel> {
@@ -60,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val settingsViewModel by viewModels<SettingsViewModel> {
-        SettingsViewModelFactory(this, preferencesRepository)
+        SettingsViewModelFactory(this, accountRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -10,17 +10,21 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class OkHttpClientFactory {
 
-    fun createScreenScraperFr(accountUseCase: AccountUseCase) = createService(
+    fun createScreenScraperFr(
+        getAccount: () -> Pair<String, String>,
+    ) = createService(
         baseUrl = "https://www.screenscraper.fr/api2/",
         serviceClass = ScreenScraperFrService::class.java,
-        client = createClient(accountUseCase),
+        client = createClient(getAccount),
     )
 
-    private fun createClient(accountUseCase: AccountUseCase): OkHttpClient =
+    private fun createClient(
+        getAccount: () -> Pair<String, String>,
+    ): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(DevInterceptor(BuildConfig.DEBUG))
             .addInterceptor(FormatInterceptor())
-            .addInterceptor(UserInterceptor(accountUseCase)) // ToDo
+            .addInterceptor(UserInterceptor(getAccount))
             .addNetworkInterceptor(FlipperUtils.createInterceptor())
             .build()
 
