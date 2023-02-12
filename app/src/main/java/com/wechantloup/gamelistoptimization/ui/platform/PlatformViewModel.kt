@@ -111,6 +111,7 @@ class PlatformViewModel(
                     errors.add(result)
                 }
             }
+            scrapedGames.sortBy { it.name ?: it.path }
             val scrapedPlatform = platform.copy(games = scrapedGames)
             _stateFlow.value = stateFlow.value.copy(platform = scrapedPlatform, errors = errors)
             showLoader(false)

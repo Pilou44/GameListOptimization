@@ -116,8 +116,11 @@ class GameViewModel(
                 game
             }
 
-            mutableGameList.removeAt(gameIndex)
-            mutableGameList.add(gameIndex, newGame)
+            mutableGameList.apply {
+                removeAt(gameIndex)
+                add(gameIndex, newGame)
+                sortBy { game.name ?: game.path }
+            }
             val platform = currentPlatform.copy(games = mutableGameList)
 
             Log.d("TOTO", "Save game with image ${game.image}")

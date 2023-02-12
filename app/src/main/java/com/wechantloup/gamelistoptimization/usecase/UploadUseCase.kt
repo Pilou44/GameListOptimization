@@ -34,7 +34,10 @@ class UploadUseCase(
         if (!result) return false
 
         val destGames = destPlatform.games.toMutableList()
-            .apply { add(game) }
+            .apply {
+                add(game)
+                sortBy { game.name ?: game.path }
+            }
         val newPlatform = destPlatform.copy(games = destGames)
         provider.savePlatform(newPlatform)
 

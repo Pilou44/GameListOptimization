@@ -34,6 +34,8 @@ class CleanGameListUseCase(private val provider: GameListProvider) {
         }
         Log.d(TAG, "Platform contains ${platformGames.size} games after adding remaining files")
 
+        platformGames.sortBy { it.name ?: it.path }
+
         return platform.copy(games = platformGames)
     }
 
