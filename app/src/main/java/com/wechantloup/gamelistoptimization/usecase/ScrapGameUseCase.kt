@@ -90,7 +90,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
     }
 
     private fun ScraperGame.extractImage(romName: String, crc: String): ImageUrl? {
-        val images = medias.filter { it.type == MEDIA_BOX_2D }
+        val images = medias.filter { it.type == MEDIA_MIX_RBV_2 }
 
         if (images.isEmpty()) {
             return null
@@ -139,7 +139,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
 
         private val DEFAULT_LANGUAGE = Locale.ENGLISH.language
 
-        private const val MEDIA_BOX_2D = "box-2D"
+        private const val MEDIA_MIX_RBV_2 = "mixrbv2"
         private const val REGION_WORLD = "wor"
     }
 }
