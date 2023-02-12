@@ -15,6 +15,7 @@ import com.hierynomus.smbj.share.Directory
 import com.hierynomus.smbj.share.DiskShare
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
+import com.wechantloup.gamelistoptimization.model.ProviderInfo
 import com.wechantloup.gamelistoptimization.model.Source
 import fr.arnaudguyon.xmltojsonlib.JsonToXml
 import fr.arnaudguyon.xmltojsonlib.XmlToJson
@@ -24,7 +25,10 @@ import java.util.EnumSet
 import java.util.zip.CRC32
 import java.util.zip.CheckedInputStream
 
-class GameListProvider {
+class GameListProvider(
+    private val getProviderInfo: () -> ProviderInfo?,
+    private val appName: String,
+) {
 
     private val gson = Gson()
     private var share: DiskShare? = null
@@ -331,11 +335,12 @@ class GameListProvider {
 
     private fun Platform.toGameListHolder(): GameListHolder {
         val games = games.map { it.toGameListGame() }
+        val providerInfo = getProviderInfo()
         val provider = Provider(
             system = name,
-            software = null, // ToDo
-            database = null, // ToDo
-            web = null, // ToDo
+            software = appName,
+            database = providerInfo?.database,
+            web = providerInfo?.web,
             extensions = extensions.joinToString(EXTENSION_SEPARATOR),
         )
         val gameList = GameList(

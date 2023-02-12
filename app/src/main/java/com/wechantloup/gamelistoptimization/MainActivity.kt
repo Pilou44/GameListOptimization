@@ -43,8 +43,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val accountRepository by lazy { AccountRepository(this) }
-    private val provider by lazy { GameListProvider() }
     private val scraper by lazy { Scraper(accountRepository::getAccount) }
+    private val provider by lazy { GameListProvider(scraper::getProviderInfo, getString(R.string.app_name)) }
     private val webDownloader by lazy { WebDownloader() }
     private val cacheProvider by lazy { CacheProvider(this) }
 

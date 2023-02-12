@@ -4,6 +4,7 @@ import com.wechantloup.gamelistoptimization.data.scraper.model.ScraperSystem
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.OkHttpClientFactory
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.ScraperGame
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.SystemListResponse
+import com.wechantloup.gamelistoptimization.model.ProviderInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
@@ -39,6 +40,11 @@ class Scraper(
         val systems = getSystems()
         return systems.first { it.systemNames.contains(systemName) }
     }
+
+    fun getProviderInfo() = ProviderInfo(
+        database = "ScreenScraper.fr",
+        web = "http://www.screenscraper.fr",
+    )
 
     private fun parseException(exception: HttpException, romName:String, crc: String): Exception {
         val errorCode = exception.code()
