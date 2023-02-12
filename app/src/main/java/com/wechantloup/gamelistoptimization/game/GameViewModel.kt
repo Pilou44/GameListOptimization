@@ -108,9 +108,8 @@ class GameViewModel(
         viewModelScope.launch {
             val newGame = try {
                 val imageUrl: ScrapGameUseCase.ImageUrl = requireNotNull(game.image).deserialize()
-                imageUrl.upload(source, currentPlatform, game)
+                uploadUseCase.uploadImage(source, currentPlatform, game, imageUrl.url, imageUrl.format)
             } catch (e: Exception) {
-                Log.e("TOTO", "Error reading scraped image", e)
                 // No scraped image
                 game
             }
@@ -161,20 +160,6 @@ class GameViewModel(
             }
             showLoader(false)
         }
-    }
-
-    private suspend fun ScrapGameUseCase.ImageUrl.upload(
-        source: Source,
-        platform: Platform,
-        game: Game,
-    ): Game {
-        val romName = game.getRomName()
-        val imageName = "${romName.substring(0, romName.lastIndexOf("."))}.$format"
-        val imagePath = "./media/images/$imageName"
-        val newGame = game.copy(image = imagePath)
-        val result = uploadUseCase.uploadImage(source, platform, newGame, url)
-        Log.d("TOTO", "Upload image for ${game.name} success = $result")
-        return newGame
     }
 
     private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {

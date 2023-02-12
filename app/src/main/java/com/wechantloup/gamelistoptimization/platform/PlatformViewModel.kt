@@ -2,11 +2,11 @@ package com.wechantloup.gamelistoptimization.platform
 
 import android.app.Activity
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.gson.JsonSyntaxException
 import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
@@ -124,9 +124,8 @@ class PlatformViewModel(
         platform.games.forEach { game ->
             val newGame = try {
                 val imageUrl: ScrapGameUseCase.ImageUrl = requireNotNull(game.image).deserialize()
-                imageUrl.upload(source, platform, game)
-            } catch (e: Exception) {
-                Log.e("TOTO", "Error reading scraped image", e)
+                uploadUseCase.uploadImage(source, platform, game, imageUrl.url, imageUrl.format)
+            } catch (e: JsonSyntaxException) {
                 // No scraped image
                 game
             }
@@ -134,21 +133,6 @@ class PlatformViewModel(
         }
         val newPlatform = platform.copy(games = newGames)
         _stateFlow.value = stateFlow.value.copy(platform = newPlatform)
-    }
-
-    // ToDo duplicated
-    private suspend fun ScrapGameUseCase.ImageUrl.upload(
-        source: Source,
-        platform: Platform,
-        game: Game,
-    ): Game {
-        val romName = game.getRomName()
-        val imageName = "${romName.substring(0, romName.lastIndexOf("."))}.$format"
-        val imagePath = "./media/images/$imageName"
-        val newGame = game.copy(image = imagePath)
-        val result = uploadUseCase.uploadImage(source, platform, newGame, url)
-        Log.d("TOTO", "Upload image for ${game.name} success = $result")
-        return newGame
     }
 
     private suspend fun savePlatform(platform: Platform) {

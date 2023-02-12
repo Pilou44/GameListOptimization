@@ -50,6 +50,25 @@ class UploadUseCase(
         return newPlatform
     }
 
+    suspend fun uploadImage(
+        source: Source,
+        platform: Platform,
+        game: Game,
+        url: String,
+        format: String,
+    ): Game {
+        val romName = game.getRomName()
+        val imageName = "${romName.substring(0, romName.lastIndexOf("."))}.$format"
+        val imagePath = "./media/images/$imageName"
+        val newGame = game.copy(image = imagePath)
+        val result = uploadImage(source, platform, newGame, url)
+        return if (result) {
+            newGame
+        } else {
+            game
+        }
+    }
+
     suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, url: String): Boolean {
         if (game.image == null) return false
 
