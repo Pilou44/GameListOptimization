@@ -8,6 +8,7 @@ import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.System
 import com.wechantloup.gamelistoptimization.usecase.AccountUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 class Scraper(preferencesRepository: PreferencesRepository) {
 
@@ -21,19 +22,34 @@ class Scraper(preferencesRepository: PreferencesRepository) {
         fileSize: Long,
         crc: String,
     ): ScraperGame = withContext(Dispatchers.IO) {
-        val systemId = getSystem(system).id
-        val info = scraper.getGameInfo(
-            crcHexa = crc,
-            romName = romName,
-            romSize = fileSize,
-            systemId = systemId,
-        )
-        return@withContext info.response.game
+        try {
+            val systemId = getSystem(system).id
+            val info = scraper.getGameInfo(
+                crcHexa = crc,
+                romName = romName,
+                romSize = fileSize,
+                systemId = systemId,
+            )
+            return@withContext info.response.game
+        } catch (e: HttpException) {
+            throw parseException(e, romName, crc)
+        }
     }
 
     suspend fun getSystem(systemName: String): ScraperSystem {
         val systems = getSystems()
         return systems.first { it.systemNames.contains(systemName) }
+    }
+
+    private fun parseException(exception: HttpException, romName:String, crc: String): Exception {
+        val errorCode = exception.code()
+        val msg = "Error scraping $romName witch crc $crc"
+        return when (errorCode) {
+            400 -> BadCrcException(msg, exception)
+            404 -> UnknownGameException(msg, exception)
+            429 -> TooManyRequestsException(msg, exception)
+            else -> exception
+        }
     }
 
     private suspend fun getSystems(): List<ScraperSystem> = withContext(Dispatchers.IO) {
