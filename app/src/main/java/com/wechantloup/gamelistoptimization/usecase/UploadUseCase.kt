@@ -1,5 +1,6 @@
 package com.wechantloup.gamelistoptimization.usecase
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
@@ -49,15 +50,6 @@ class UploadUseCase(
         return newPlatform
     }
 
-    suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, src: File): Boolean {
-        if (game.image == null) return false
-        provider.open(destSource)
-        val destPlatform =
-            provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: createPlatform(srcPlatform)
-        val imagePath = game.getImagePath(destPlatform)
-        return upload(src, imagePath)
-    }
-
     suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, url: String): Boolean {
         if (game.image == null) return false
 
@@ -74,7 +66,35 @@ class UploadUseCase(
         return uploadImage(destSource, srcPlatform, game, cachedImage)
     }
 
-    suspend fun upload(
+    suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, bmp: Bitmap): Boolean {
+        if (game.image == null) return false
+
+        val parent = cacheProvider.getTempDir()
+        if (!parent.exists()) parent.mkdirs()
+        val cachedImage = File(parent, "tmp")
+
+        withContext(Dispatchers.IO) {
+            if (!cachedImage.exists()) cachedImage.createNewFile()
+            cachedImage.deleteOnExit()
+            val out = cachedImage.outputStream()
+            out.use {
+                bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+        }
+
+        return uploadImage(destSource, srcPlatform, game, cachedImage)
+    }
+
+    private suspend fun uploadImage(destSource: Source, srcPlatform: Platform, game: Game, src: File): Boolean {
+        if (game.image == null) return false
+        provider.open(destSource)
+        val destPlatform =
+            provider.getPlatforms().firstOrNull { it.isSameAs(srcPlatform) } ?: createPlatform(srcPlatform)
+        val imagePath = game.getImagePath(destPlatform)
+        return upload(src, imagePath)
+    }
+
+    private suspend fun upload(
         src: File,
         destPath: String,
     ): Boolean = withContext(Dispatchers.IO) {

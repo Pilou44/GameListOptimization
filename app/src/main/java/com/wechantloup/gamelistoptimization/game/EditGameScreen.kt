@@ -48,7 +48,7 @@ fun EditGameScreen(
 @Composable
 private fun EditGameScreen(
     game: Game,
-    image: String?,
+    image: Any?,
     isLoaderVisible: Boolean,
     onBackPressed: () -> Unit,
     onGameChanged: (Game) -> Unit,

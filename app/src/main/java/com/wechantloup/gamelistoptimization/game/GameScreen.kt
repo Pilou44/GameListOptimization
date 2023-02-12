@@ -1,5 +1,6 @@
 package com.wechantloup.gamelistoptimization.game
 
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,7 +55,7 @@ fun GameScreen(
 @Composable
 private fun GameScreen(
     game: Game?,
-    image: String?,
+    image: Any?,
     copyDestinations: List<Source>,
     onCopyClicked: (Source) -> Unit,
     onBackPressed: () -> Unit,
@@ -157,7 +158,7 @@ private fun CopyZone(
     onCopyClicked: (Source) -> Unit,
 ) {
     var source: Source? by remember { mutableStateOf(null) }
-    Row(modifier = Modifier.wrapContentWidth()) {
+    Row(modifier = modifier.wrapContentWidth()) {
         Text(
             modifier = Modifier
                 .wrapContentWidth()

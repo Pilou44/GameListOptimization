@@ -13,7 +13,6 @@ import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
-import com.wechantloup.gamelistoptimization.usecase.CacheImageUseCase
 import com.wechantloup.gamelistoptimization.usecase.CleanGameListUseCase
 import com.wechantloup.gamelistoptimization.usecase.SavePlatformUseCase
 import com.wechantloup.gamelistoptimization.usecase.ScrapGameUseCase
@@ -38,7 +37,6 @@ class PlatformViewModelFactory(
         val cleanGameListUseCase = CleanGameListUseCase(provider)
         val scrapGameUseCase = ScrapGameUseCase(scraper, provider)
         val scrapPlatformUseCase = ScrapPlatformUseCase(scraper)
-        val cacheImageUseCase = CacheImageUseCase(cacheProvider)
         val uploadUseCase = UploadUseCase(provider, webDownloader, cacheProvider)
         @Suppress("UNCHECKED_CAST")
         return PlatformViewModel(
@@ -47,7 +45,6 @@ class PlatformViewModelFactory(
             savePlatformUseCase,
             scrapGameUseCase,
             scrapPlatformUseCase,
-            cacheImageUseCase,
             uploadUseCase,
         ) as T
     }
@@ -59,7 +56,6 @@ class PlatformViewModel(
     private val savePlatformUseCase: SavePlatformUseCase,
     private val scrapGameUseCase: ScrapGameUseCase,
     private val srapPlatformUseCase: ScrapPlatformUseCase,
-    private val cacheImageUseCase: CacheImageUseCase,
     private val uploadUseCase: UploadUseCase,
 ) : AndroidViewModel(application) {
 
@@ -127,7 +123,6 @@ class PlatformViewModel(
         val newGames = mutableListOf<Game>()
         platform.games.forEach { game ->
             val newGame = try {
-                cacheImageUseCase.removeImageFile(source, platform, game)
                 val imageUrl: ScrapGameUseCase.ImageUrl = requireNotNull(game.image).deserialize()
                 imageUrl.upload(source, platform, game)
             } catch (e: Exception) {

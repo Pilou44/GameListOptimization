@@ -1,5 +1,7 @@
 package com.wechantloup.gamelistoptimization.usecase
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
@@ -33,6 +35,7 @@ class DownloadUseCase(private val provider: GameListProvider) {
             }
             val outputStream = dest.outputStream()
             val src = provider.getFileForReading(path)
+            Log.i("TOTO", "Image path = ${src.path}")
             val inputStream = src.inputStream
             src.use {
                 inputStream.use {
