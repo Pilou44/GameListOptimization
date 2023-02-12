@@ -10,6 +10,7 @@ import com.google.gson.JsonSyntaxException
 import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
+import com.wechantloup.gamelistoptimization.model.ScrapResult
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.Scraper
@@ -101,20 +102,23 @@ class PlatformViewModel(
         showLoader(true)
         viewModelScope.launch {
             val scrapedGames = mutableListOf<Game>()
-            val errors = mutableListOf<ScrapGameUseCase.Result>()
+            val errors = mutableListOf<ScrapResult>()
             platform.games.forEach { game ->
                 val result = scrapGameUseCase.scrapGame(game, platform)
                 val newGame = result.game
                 scrapedGames.add(newGame)
-                if (result.status != ScrapGameUseCase.Result.Status.SUCCESS) {
+                if (result.status != ScrapResult.Status.SUCCESS) {
                     errors.add(result)
                 }
             }
             val scrapedPlatform = platform.copy(games = scrapedGames)
-            _stateFlow.value = stateFlow.value.copy(platform = scrapedPlatform)
+            _stateFlow.value = stateFlow.value.copy(platform = scrapedPlatform, errors = errors)
             showLoader(false)
-            // ToDo display errors
         }
+    }
+
+    fun clearErrors() {
+        _stateFlow.value = stateFlow.value.copy(errors = emptyList())
     }
 
     private suspend fun downloadAllImages() {
@@ -152,6 +156,7 @@ class PlatformViewModel(
         val source: Source? = null,
         val platform: Platform? = null,
         val showLoader: Boolean = false,
+        val errors: List<ScrapResult> = emptyList(),
     )
 
     companion object {

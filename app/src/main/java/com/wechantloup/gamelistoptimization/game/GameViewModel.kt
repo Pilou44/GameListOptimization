@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
+import com.wechantloup.gamelistoptimization.model.ScrapResult
 import com.wechantloup.gamelistoptimization.model.Source
 import com.wechantloup.gamelistoptimization.model.Sources
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
@@ -142,7 +143,7 @@ class GameViewModel(
             val platform = requireNotNull(getCurrentPlatform())
             val result = scrapGameUseCase.scrapGame(game, platform)
 
-            if (result.status == ScrapGameUseCase.Result.Status.SUCCESS) {
+            if (result.status == ScrapResult.Status.SUCCESS) {
                 val newGame = result.game
 
                 try {
@@ -156,10 +157,14 @@ class GameViewModel(
                 Log.i(TAG, "Set new scraper info for ${newGame.name}")
                 _stateFlow.value = stateFlow.value.copy(game = newGame)
             } else {
-                // ToDo display error
+                _stateFlow.value = stateFlow.value.copy(error = result)
             }
             showLoader(false)
         }
+    }
+
+    fun clearErrors() {
+        _stateFlow.value = stateFlow.value.copy(error = null)
     }
 
     private suspend fun copyGameToCache(): File = withContext(Dispatchers.IO) {
@@ -224,6 +229,7 @@ class GameViewModel(
         val image: Any? = null,
         val showLoader: Boolean = false,
         val copyDestinations: List<Source> = emptyList(),
+        val error: ScrapResult? = null,
     )
 
     companion object {

@@ -24,6 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.compose.BackButton
 import com.wechantloup.gamelistoptimization.compose.FullScreenLoader
+import com.wechantloup.gamelistoptimization.compose.ScrapErrorDialog
+import com.wechantloup.gamelistoptimization.model.ScrapResult
 
 @Composable
 fun EditPlatformScreen(
@@ -36,6 +38,8 @@ fun EditPlatformScreen(
     EditPlatformScreen(
         platformName = platformName,
         isLoaderVisible = state.value.showLoader,
+        errors = state.value.errors,
+        clearErrors = viewModel::clearErrors,
         save = viewModel::savePlatform,
         updateName = viewModel::updateName,
         onCleanClicked = viewModel::cleanPlatform,
@@ -48,6 +52,8 @@ fun EditPlatformScreen(
 fun EditPlatformScreen(
     platformName: String,
     isLoaderVisible: Boolean,
+    errors: List<ScrapResult>,
+    clearErrors: () -> Unit,
     save: (() -> Unit) -> Unit,
     updateName: (String) -> Unit,
     onCleanClicked: () -> Unit,
@@ -112,6 +118,13 @@ fun EditPlatformScreen(
                     Text(text = "Scrap all games")
                 }
             }
+            if (errors.isNotEmpty()) {
+                ScrapErrorDialog(
+                    errors = errors,
+                    clearErrors = clearErrors,
+                    modifier = Modifier,
+                )
+            }
         }
     }
 }
@@ -122,6 +135,8 @@ fun EditPlatformScreenPreview() {
     EditPlatformScreen(
         platformName = "Megadrive",
         isLoaderVisible = false,
+        errors = emptyList(),
+        clearErrors = {},
         save = {},
         updateName = {},
         onCleanClicked = {},

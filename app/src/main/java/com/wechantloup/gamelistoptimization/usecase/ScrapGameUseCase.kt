@@ -3,6 +3,7 @@ package com.wechantloup.gamelistoptimization.usecase
 import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
+import com.wechantloup.gamelistoptimization.model.ScrapResult
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.scraper.BadCrcException
 import com.wechantloup.gamelistoptimization.scraper.Scraper
@@ -18,7 +19,7 @@ import java.util.Locale
 
 class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameListProvider) {
 
-    suspend fun scrapGame(game: Game, platform: Platform): Result {
+    suspend fun scrapGame(game: Game, platform: Platform): ScrapResult {
         val gamePath = game.getPath(platform)
         val crc = provider.getFileCrc(gamePath).toHexString()
         return scrapGame(game, platform, crc, retry = true)
@@ -29,7 +30,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         platform: Platform,
         crc: String,
         retry: Boolean,
-    ): Result {
+    ): ScrapResult {
         val romName = game.getRomName()
         val gamePath = game.getPath(platform)
         val scrapedGame = try {
@@ -46,14 +47,14 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             } else {
                 Log.w(TAG, "Scrap tried 2 times, ignoring")
                 Log.e(TAG, "Too many scrap requests", e)
-                return Result(game, Result.Status.TOO_MANY_REQUESTS)
+                return ScrapResult(game, ScrapResult.Status.TOO_MANY_REQUESTS)
             }
         } catch (e: BadCrcException) {
             Log.e(TAG, "Bad crc $crc for $romName", e)
-            return Result(game, Result.Status.BAD_CRC)
+            return ScrapResult(game, ScrapResult.Status.BAD_CRC)
         } catch (e: UnknownGameException) {
             Log.e(TAG, "Unknown game $romName", e)
-            return Result(game, Result.Status.UNKNOWN_GAME)
+            return ScrapResult(game, ScrapResult.Status.UNKNOWN_GAME)
         }
 
         val newGAme = Game(
@@ -76,7 +77,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             kidgame = game.kidgame,
             hidden = game.hidden,
         )
-        return Result(newGAme, Result.Status.SUCCESS)
+        return ScrapResult(newGAme, ScrapResult.Status.SUCCESS)
     }
 
     private fun ScraperGame.toGame(romName: String, crc: String): Game {
@@ -146,18 +147,6 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         val url: String,
         val format: String,
     )
-
-    data class Result(
-        val game: Game,
-        val status: Status,
-    ) {
-        enum class Status {
-            SUCCESS,
-            TOO_MANY_REQUESTS,
-            UNKNOWN_GAME,
-            BAD_CRC,
-        }
-    }
 
     companion object {
         private const val TAG = "ScrapGameUseCase"

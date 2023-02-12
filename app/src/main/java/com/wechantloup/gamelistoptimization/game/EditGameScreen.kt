@@ -25,7 +25,9 @@ import coil.compose.AsyncImage
 import com.wechantloup.gamelistoptimization.R
 import com.wechantloup.gamelistoptimization.compose.BackButton
 import com.wechantloup.gamelistoptimization.compose.FullScreenLoader
+import com.wechantloup.gamelistoptimization.compose.ScrapErrorDialog
 import com.wechantloup.gamelistoptimization.model.Game
+import com.wechantloup.gamelistoptimization.model.ScrapResult
 import com.wechantloup.gamelistoptimization.theme.Dimens
 
 @Composable
@@ -38,6 +40,8 @@ fun EditGameScreen(
         game = requireNotNull(state.value.game),
         image = state.value.image,
         isLoaderVisible = state.value.showLoader,
+        errors = listOfNotNull(state.value.error),
+        clearErrors = viewModel::clearErrors,
         onBackPressed = onBackPressed,
         onGameChanged = viewModel::onGameChanged,
         saveGame = viewModel::saveGame,
@@ -50,6 +54,8 @@ private fun EditGameScreen(
     game: Game,
     image: Any?,
     isLoaderVisible: Boolean,
+    errors: List<ScrapResult>,
+    clearErrors: () -> Unit,
     onBackPressed: () -> Unit,
     onGameChanged: (Game) -> Unit,
     saveGame: (() -> Unit) -> Unit,
@@ -141,6 +147,13 @@ private fun EditGameScreen(
                         .padding(Dimens.spacingS),
                     model = image,
                     contentDescription = game.name,
+                )
+            }
+            if (errors.isNotEmpty()) {
+                ScrapErrorDialog(
+                    errors = errors,
+                    clearErrors = clearErrors,
+                    modifier = Modifier,
                 )
             }
         }
