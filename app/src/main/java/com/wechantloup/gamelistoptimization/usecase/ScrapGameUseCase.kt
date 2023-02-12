@@ -4,7 +4,9 @@ import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
+import com.wechantloup.gamelistoptimization.scraper.BadCrcException
 import com.wechantloup.gamelistoptimization.scraper.Scraper
+import com.wechantloup.gamelistoptimization.scraper.TooManyRequestsException
 import com.wechantloup.gamelistoptimization.scraper.UnknownGameException
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.LanguageString
 import com.wechantloup.gamelistoptimization.scraper.screenscraperfr.model.RegionString
@@ -17,10 +19,19 @@ import java.util.Locale
 class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameListProvider) {
 
     suspend fun scrapGame(game: Game, platform: Platform): Game {
-        val romName = game.getRomName()
         val gamePath = game.getPath(platform)
         val crc = provider.getFileCrc(gamePath).toHexString()
+        return scrapGame(game, platform, crc, retry = true)
+    }
 
+    private suspend fun scrapGame(
+        game: Game,
+        platform: Platform,
+        crc: String,
+        retry: Boolean,
+    ): Game {
+        val romName = game.getRomName()
+        val gamePath = game.getPath(platform)
         val scrapedGame = try {
             val scrap = scraper.scrapGame(
                 romName = romName,
@@ -29,8 +40,23 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
                 crc = crc,
             )
             scrap.toGame(romName, crc)
-        } catch (e: Exception) { // ToDo Catch 429 leecher
-            Log.e(TAG, "Unable to scrap ${game.getRomName()}", e)
+        } catch (e: TooManyRequestsException) {
+            if (retry) {
+                return scrapGame(game, platform, crc, retry = false)
+            } else {
+                Log.w(TAG, "Scrap tried 2 times, ignoring")
+                Log.e(TAG, "Too many scrap requests", e)
+                return game
+            }
+        } catch (e: BadCrcException) {
+            Log.e(TAG, "Bad crc $crc for $romName", e)
+            if (game.name.isNullOrBlank() || game.name.contains(romName)) {
+                return unknownGame(romName)
+            } else {
+                return game
+            }
+        } catch (e: UnknownGameException) {
+            Log.e(TAG, "Unknown game $romName", e)
             if (game.name.isNullOrBlank() || game.name.contains(romName)) {
                 return unknownGame(romName)
             } else {
@@ -69,6 +95,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
 
     private fun ScraperGame.toGame(romName: String, crc: String): Game {
         if (unknownGame) {
+            Log.w(TAG, "Unknown game detected at conversion")
             throw UnknownGameException("Unknown game $romName")
         }
 
