@@ -142,20 +142,26 @@ class GameViewModel(
         viewModelScope.launch {
             val game = requireNotNull(getCurrentGame())
             val platform = requireNotNull(getCurrentPlatform())
-            val newGame = scrapGameUseCase.scrapGame(game, platform)
+            val result = scrapGameUseCase.scrapGame(game, platform)
 
-            try {
-                val imageUrl: ScrapGameUseCase.ImageUrl? = newGame.image?.deserialize()
+            if (result.status == ScrapGameUseCase.Result.Status.SUCCESS) {
+                val newGame = result.game
 
-                imageUrl?.let {
-                    _stateFlow.value = stateFlow.value.copy(image = it.url)
+                try {
+                    val imageUrl: ScrapGameUseCase.ImageUrl? = newGame.image?.deserialize()
+
+                    imageUrl?.let {
+                        _stateFlow.value = stateFlow.value.copy(image = it.url)
+                    }
+                } catch (e: Exception) {
+                    // No scraped image
                 }
-            } catch (e: Exception) {
-                // No scraped image
-            }
 
-            Log.i(TAG, "Set new scraper info for ${newGame.name}")
-            _stateFlow.value = stateFlow.value.copy(game = newGame)
+                Log.i(TAG, "Set new scraper info for ${newGame.name}")
+                _stateFlow.value = stateFlow.value.copy(game = newGame)
+            } else {
+                // ToDo display error
+            }
             showLoader(false)
         }
     }

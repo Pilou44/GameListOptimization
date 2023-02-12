@@ -105,13 +105,19 @@ class PlatformViewModel(
         showLoader(true)
         viewModelScope.launch {
             val scrapedGames = mutableListOf<Game>()
+            val errors = mutableListOf<ScrapGameUseCase.Result>()
             platform.games.forEach { game ->
-                val newGame = scrapGameUseCase.scrapGame(game, platform)
+                val result = scrapGameUseCase.scrapGame(game, platform)
+                val newGame = result.game
                 scrapedGames.add(newGame)
+                if (result.status != ScrapGameUseCase.Result.Status.SUCCESS) {
+                    errors.add(result)
+                }
             }
             val scrapedPlatform = platform.copy(games = scrapedGames)
             _stateFlow.value = stateFlow.value.copy(platform = scrapedPlatform)
             showLoader(false)
+            // ToDo display errors
         }
     }
 
