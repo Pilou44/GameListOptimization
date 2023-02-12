@@ -2,8 +2,8 @@ package com.wechantloup.gamelistoptimization.usecase
 
 import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Platform
-import com.wechantloup.gamelistoptimization.scraper.Scraper
-import com.wechantloup.gamelistoptimization.scraper.model.ScraperSystem
+import com.wechantloup.gamelistoptimization.data.scraper.Scraper
+import com.wechantloup.gamelistoptimization.data.scraper.model.ScraperSystem
 import com.wechantloup.gamelistoptimization.utils.isEuRegion
 import com.wechantloup.gamelistoptimization.utils.isJpRegion
 import com.wechantloup.gamelistoptimization.utils.isUsRegion

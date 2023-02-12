@@ -4,7 +4,7 @@ import android.util.Log
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
-import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
+import com.wechantloup.gamelistoptimization.data.sambaprovider.GameListProvider
 
 class CleanGameListUseCase(private val provider: GameListProvider) {
 

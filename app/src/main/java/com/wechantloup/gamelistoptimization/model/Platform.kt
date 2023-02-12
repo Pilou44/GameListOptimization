@@ -1,6 +1,6 @@
 package com.wechantloup.gamelistoptimization.model
 
-import com.wechantloup.gamelistoptimization.compose.DropdownComparable
+import com.wechantloup.gamelistoptimization.ui.compose.DropdownComparable
 
 data class Platform(
     val name: String,

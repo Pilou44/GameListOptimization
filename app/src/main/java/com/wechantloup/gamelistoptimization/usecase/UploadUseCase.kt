@@ -2,15 +2,15 @@ package com.wechantloup.gamelistoptimization.usecase
 
 import android.graphics.Bitmap
 import android.util.Log
-import com.wechantloup.gamelistoptimization.cacheprovider.CacheProvider
+import com.wechantloup.gamelistoptimization.data.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
 import com.wechantloup.gamelistoptimization.model.Source
-import com.wechantloup.gamelistoptimization.sambaprovider.GameListProvider
+import com.wechantloup.gamelistoptimization.data.sambaprovider.GameListProvider
 import com.wechantloup.gamelistoptimization.utils.copy
 import com.wechantloup.gamelistoptimization.utils.getImagePath
 import com.wechantloup.gamelistoptimization.utils.getPath
-import com.wechantloup.gamelistoptimization.webdownloader.WebDownloader
+import com.wechantloup.gamelistoptimization.data.webdownloader.WebDownloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
