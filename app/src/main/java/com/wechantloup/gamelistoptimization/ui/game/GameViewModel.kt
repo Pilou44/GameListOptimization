@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.gson.JsonSyntaxException
 import com.wechantloup.gamelistoptimization.data.cacheprovider.CacheProvider
 import com.wechantloup.gamelistoptimization.model.Game
 import com.wechantloup.gamelistoptimization.model.Platform
@@ -111,8 +112,14 @@ class GameViewModel(
             val newGame = try {
                 val imageUrl: ScrapGameUseCase.ImageUrl = requireNotNull(game.image).deserialize()
                 uploadUseCase.uploadImage(source, currentPlatform, game, imageUrl.url, imageUrl.format)
-            } catch (e: Exception) {
+            } catch (e: JsonSyntaxException) {
                 // No scraped image
+                game
+            } catch (e: IllegalArgumentException) {
+                // No image
+                game
+            } catch (e: NullPointerException) {
+                // No image
                 game
             }
 

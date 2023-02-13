@@ -28,7 +28,7 @@ class ScraperGame(
 class Rom(
     @SerializedName("romfilename") val fileName: String?,
     @SerializedName("romcrc") val crc: String?,
-    @SerializedName("regions") val regions: Region,
+    @SerializedName("regions") val regions: Region?,
 )
 
 class Region(

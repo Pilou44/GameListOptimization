@@ -133,6 +133,12 @@ class PlatformViewModel(
             } catch (e: JsonSyntaxException) {
                 // No scraped image
                 game
+            } catch (e: IllegalArgumentException) {
+                // No image
+                game
+            } catch (e: NullPointerException) {
+                // No image
+                game
             }
             newGames.add(newGame)
         }
