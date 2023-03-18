@@ -22,7 +22,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
 
     suspend fun scrapGame(game: Game, platform: Platform): ScrapResult {
         val gamePath = game.getPath(platform)
-        val crc = provider.getFileCrc(gamePath).toHexString()
+        val crc = provider.getFileCrc(gamePath)
         return scrapGame(game, platform, crc, retry = true)
     }
 

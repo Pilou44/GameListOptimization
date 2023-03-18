@@ -21,6 +21,7 @@ import fr.arnaudguyon.xmltojsonlib.JsonToXml
 import fr.arnaudguyon.xmltojsonlib.XmlToJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.internal.toHexString
 import java.util.EnumSet
 import java.util.zip.CRC32
 import java.util.zip.CheckedInputStream
@@ -128,7 +129,7 @@ class GameListProvider(
         return@withContext info.standardInformation.endOfFile
     }
 
-    suspend fun getFileCrc(path: String): Long = withContext(Dispatchers.IO) {
+    suspend fun getFileCrc(path: String): String = withContext(Dispatchers.IO) {
         val file = getShare().openFile(
             path,
             EnumSet.of(AccessMask.GENERIC_READ),
@@ -145,7 +146,9 @@ class GameListProvider(
             }
         }
         file.close()
-        return@withContext crc.value
+        var crc32 = crc.value.toHexString()
+        while (crc32.length < 8) crc32 = "0$crc32"
+        return@withContext crc32
     }
 
     suspend fun getGameNamesFromPlatform(platform: Platform): List<String> = withContext(Dispatchers.IO) {
