@@ -248,7 +248,9 @@ class GameListProvider(
             )
 
             val inputStream = readFile.inputStream
-            val xmlToJson: XmlToJson = XmlToJson.Builder(inputStream, null).build()
+            val xmlToJson: XmlToJson = XmlToJson.Builder(inputStream, null)
+                .forceList("/gameList/game")
+                .build()
             inputStream.close()
 
             val jsonString = xmlToJson.toString()
