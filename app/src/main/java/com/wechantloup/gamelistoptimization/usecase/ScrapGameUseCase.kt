@@ -118,6 +118,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             ?: images.firstOrNull { regions.contains(it.region) }
             ?: images.firstOrNull { regions.map { gameRegion -> gameRegion.getRegion() }.contains(it.region) }
             ?: images.firstOrNull { it.region == REGION_WORLD }
+            ?: images.firstOrNull().takeIf { regions.contains(REGION_WORLD) }
             ?: return null
 
         return ImageUrl(format = image.format, url = image.url)
@@ -136,6 +137,7 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
             ?: firstOrNull { regions.contains(it.region) }
             ?: firstOrNull { regions.map { gameRegion -> gameRegion.getRegion() }.contains(it.region) }
             ?: firstOrNull { it.region == REGION_WORLD }
+            ?: firstOrNull().takeIf { regions.contains(REGION_WORLD) }
             ?: return null
 
         return regionString.text
