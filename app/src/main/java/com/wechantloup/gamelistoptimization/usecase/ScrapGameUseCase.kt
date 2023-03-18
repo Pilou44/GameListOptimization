@@ -13,6 +13,7 @@ import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.L
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.RegionString
 import com.wechantloup.gamelistoptimization.data.scraper.screenscraperfr.model.ScraperGame
 import com.wechantloup.gamelistoptimization.utils.getPath
+import com.wechantloup.gamelistoptimization.utils.getRegion
 import com.wechantloup.gamelistoptimization.utils.serialize
 import okhttp3.internal.toHexString
 import java.util.Locale
@@ -115,14 +116,17 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         val regions = extractRegions(romName, crc) ?: return null
         val image = images.firstOrNull { it.region == regions.first() }
             ?: images.firstOrNull { regions.contains(it.region) }
-            ?: images.firstOrNull().takeIf { regions.contains(REGION_WORLD) }
+            ?: images.firstOrNull { regions.map { gameRegion -> gameRegion.getRegion() }.contains(it.region) }
+            ?: images.firstOrNull { it.region == REGION_WORLD }
             ?: return null
 
         return ImageUrl(format = image.format, url = image.url)
     }
 
     private fun ScraperGame.extractRegions(romName: String, crc: String): List<String>? {
-        val rom = roms.firstOrNull { it.crc?.uppercase() == crc.uppercase() } ?: roms.firstOrNull { it.fileName == romName } ?: return null
+        val rom = roms.firstOrNull { it.crc?.uppercase() == crc.uppercase() }
+            ?: roms.firstOrNull { it.fileName == romName }
+            ?: return null
         return rom.regions?.shortNames
     }
 
@@ -130,7 +134,8 @@ class ScrapGameUseCase(private val scraper: Scraper, private val provider: GameL
         val regions = game.extractRegions(romName, crc) ?: return null
         val regionString = firstOrNull { it.region == regions.first() }
             ?: firstOrNull { regions.contains(it.region) }
-            ?: firstOrNull().takeIf { regions.contains(REGION_WORLD) }
+            ?: firstOrNull { regions.map { gameRegion -> gameRegion.getRegion() }.contains(it.region) }
+            ?: firstOrNull { it.region == REGION_WORLD }
             ?: return null
 
         return regionString.text

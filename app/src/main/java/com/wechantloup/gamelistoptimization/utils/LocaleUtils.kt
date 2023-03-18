@@ -22,3 +22,12 @@ fun String.isJpRegion(): Boolean {
     )
     return jpCountries.contains(this.uppercase())
 }
+
+fun String.getRegion(): String? {
+    return when {
+        isEuRegion() -> "eu"
+        isUsRegion() -> "us"
+        isJpRegion() -> "jp"
+        else -> null
+    }
+}
